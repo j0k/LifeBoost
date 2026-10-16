@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeBoost · конструктор зала</title>
+<meta name="description" content="Соберите зал для акробатики, акройоги, йоги, растяжки и кроссфита из готовых модулей: план с зонами безопасности, развёртки стен, разрез по высотам и список закупки.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LifeBoost">
+<meta property="og:title" content="LifeBoost — конструктор зала">
+<meta property="og:description" content="От уголка с турником на 5 м² до мультизала: собираете из кубиков, получаете чертежи и список закупки.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23131417'/%3E%3Crect x='6' y='6' width='9' height='9' rx='2' fill='%23ff9a55'/%3E%3Crect x='17' y='6' width='9' height='9' rx='2' fill='%2382aaff'/%3E%3Crect x='6' y='17' width='20' height='9' rx='2' fill='%235cc98a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="brand">LifeBoost</span> конструктор зала</h1>
+      <p class="lead">Соберите зал из кубиков: уголок с турником на 5 м², место для растяжки, площадки акройоги, air track, рига.
+        План сам проверяет зоны безопасности и высоту потолка, а на выходе получаются чертежи и список закупки.</p>
+    </div>
+    <div class="toolbar">
+      <span class="chip" id="chipChecks"><span class="dot"></span><span class="t">—</span></span>
+      <button class="btn" id="btnUndo" type="button" title="Ctrl+Z" aria-label="Отменить">↶</button>
+      <button class="btn" id="btnRedo" type="button" title="Ctrl+Y" aria-label="Вернуть">↷</button>
+      <select id="tplSel" class="btn" aria-label="Шаблон зала"></select>
+      <button class="btn" id="btnShare" type="button">Ссылка</button>
+      <button class="btn" id="btnOpen" type="button">Открыть…</button>
+      <button class="btn" id="btnJson" type="button">Сохранить</button>
+      <input type="file" id="fileIn" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <!-- Штамп чертежа: виден только при печати -->
+  <div class="stamp" aria-hidden="true">
+    <div><span>Проект</span><b id="stampName"></b></div>
+    <div><span>Помещение</span><b id="stampSize"></b></div>
+    <div><span>Дата</span><b id="stampDate"></b></div>
+    <div><span>Система</span><b>LifeBoost</b></div>
+  </div>
+
+  <section class="panel roombar">
+    <label class="field name"><span>Проект</span><input id="projName" type="text" maxlength="80"></label>
+    <label class="field"><span>Длина, м <small>(стена А)</small></span><input id="roomL" type="number" step="0.1" min="1.5" max="50"></label>
+    <label class="field"><span>Ширина, м</span><input id="roomW" type="number" step="0.1" min="1.5" max="50"></label>
+    <label class="field"><span>Потолок, м</span><input id="roomH" type="number" step="0.05" min="2" max="15"></label>
+    <div class="views" role="group" aria-label="Что показывать на плане">
+      <button type="button" class="tgl" data-view="zones">Зоны</button>
+      <button type="button" class="tgl" data-view="dims">Размеры</button>
+      <button type="button" class="tgl" data-view="labels">Подписи</button>
+      <button type="button" class="tgl" data-view="marks">Марки</button>
+    </div>
+  </section>
+
+  <div class="work">
+    <aside class="panel palette" aria-label="Каталог">
+      <div class="panel-head"><h2>Каталог</h2><span class="hint">клик или перетащить на план</span></div>
+      <input type="search" id="palSearch" placeholder="Поиск: турник, мат, коврик…" aria-label="Поиск по каталогу">
+      <div class="tabs wrapy" id="palTabs" role="tablist"></div>
+      <div class="pal-list" id="palList"></div>
+    </aside>
+
+    <section class="panel planpanel">
+      <div class="panel-head"><h2>План</h2><span class="hint">сетка 0,5 м · штриховка — зоны безопасности · красное — нарушения</span></div>
+      <div class="plan-wrap"><svg id="plan" tabindex="0" role="img" aria-label="План зала"></svg></div>
+    </section>
+
+    <aside class="panel insp" id="insp" aria-live="polite"></aside>
+  </div>
+
+  <div class="row2">
+    <section class="panel">
+      <div class="panel-head"><h2>Проверки</h2><span class="hint" id="checksSum"></span></div>
+      <ul class="checks" id="checks"></ul>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Сводка</h2><span class="hint">вместимость и бюджет</span></div>
+      <div id="stats"></div>
+    </section>
+  </div>
+
+  <section class="panel sheet">
+    <div class="panel-head"><h2>Разрез: хватит ли потолка</h2><span class="hint">столбик — сам снаряд, риски — минимум и рекомендуемая высота</span></div>
+    <svg id="section" class="section-svg" role="img" aria-label="Требования к высоте потолка"></svg>
+  </section>
+
+  <section class="panel sheet">
+    <div class="panel-head"><h2>Развёртки стен</h2><span class="hint">вид изнутри зала; отметки — высота от пола до низа и верха крепления</span>
+      <button class="btn sm" id="btnWallsSvg" type="button">Развёртки и разрез, SVG</button></div>
+    <div class="walls" id="walls"></div>
+  </section>
+
+  <section class="panel sheet">
+    <div class="panel-head"><h2>Спецификация и закупка</h2>
+      <div class="row"><button class="btn sm" id="btnCsv" type="button">Закупка, CSV</button><button class="btn sm" id="btnSvg" type="button">План, SVG</button><button class="btn sm" id="btnPrint" type="button">Печать / PDF всех листов</button></div></div>
+    <div id="bom"></div>
+    <p class="hint">Цены ориентировочные, Россия, 2026 год: «эконом» — «проф». Без доставки и монтажа. Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.</p>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<!-- Порядок важен: каждый файл пользуется тем, что объявлено выше -->
+<script src="js/util.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/modules.js"></script>
+<script src="js/model.js"></script>
+<script src="js/checks.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/drawings.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
