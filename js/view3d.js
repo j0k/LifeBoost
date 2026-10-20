@@ -4,10 +4,12 @@ const THREE_SRC = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
 ];
+const HINT3D = 'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать';
+const HINT3D_EDIT = 'тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать';
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
   on: false, loading: null, renderer: null, scene: null, cam: null, root: null, walls: [], pick: [],
-  mats: new Map(), pendingCam: null, orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
+  mats: new Map(), pendingCam: null, edit: false, personAt: null, person: null, drag: null, orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
 };
 
 function loadThree() {
@@ -56,6 +58,7 @@ function init3d() {
     const o = v3.orbit, k = b.dataset.cam;
     if (k === 'png') return snapshot3d();
     if (k === 'share') return share();
+    if (k === 'edit') { v3.edit = !v3.edit; b.setAttribute('aria-pressed', String(v3.edit)); $('#hint3d').textContent = v3.edit ? HINT3D_EDIT : HINT3D; return; }
     if (k === 'top') { o.th = 0; o.ph = 0.02; }
     if (k === 'front') { o.th = 0; o.ph = 1.35; }
     if (k === 'home') { o.th = ORBIT0.th; o.ph = ORBIT0.ph; }
@@ -241,12 +244,15 @@ function buildPerson(root) {
   g.add(head);
   cap(0.045, 0.56, 0.19, 1.15);
   cap(0.045, 0.68, -0.19, 1.48 + 0.385);
-  const [x, y] = personSpot();
+  const { L, W } = state.room;
+  const [x, y] = v3.personAt ? [clamp(v3.personAt[0], 25, L - 25), clamp(v3.personAt[1], 25, W - 25)] : personSpot();
   g.position.set(x / 100, 0, y / 100);
   g.rotation.y = v3.orbit.th;
   const t = letter('1,75 м', 0.22, 36);
   t.position.set(0.42, 1.75, 0);
   g.add(t);
+  g.traverse((o) => { if (o.isMesh) { o.userData.person = true; v3.pick.push(o); } });
+  v3.person = g;
   root.add(g);
 }
 
@@ -417,6 +423,8 @@ function bindOrbit(cv) {
     moved = false;
     pinch = 0;
     tip.hidden = true;
+    v3.drag = null;
+    if (v3.edit && e.button === 0 && !e.shiftKey && ptrs.size === 1) startDrag(e);
   });
   cv.addEventListener('pointermove', (e) => {
     const prev = ptrs.get(e.pointerId);
@@ -424,6 +432,8 @@ function bindOrbit(cv) {
     const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
     prev.x = e.clientX; prev.y = e.clientY;
     if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) moved = true;
+    if (v3.drag && ptrs.size === 1) { if (moved) dragTo(e); return; }
+    v3.drag = null;
     const o = v3.orbit;
     if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()], dist = Math.hypot(a.x - b.x, a.y - b.y);
@@ -443,9 +453,12 @@ function bindOrbit(cv) {
   const end = (e) => {
     if (!ptrs.has(e.pointerId)) return;
     ptrs.delete(e.pointerId);
+    const dr = v3.drag;
+    v3.drag = null;
     if (!moved && e.type === 'pointerup' && e.button === 0) {
-      const uid = pickAt(e);
-      state.sel = uid ?? null;
+      const hit = pickHit(e), uid = hit && !hit.object.userData.person ? hit.object.userData.uid : null;
+      if (dr?.list) return; // выделение уже сделано в startDrag
+      state.sel = uid;
       render();
     }
   };
@@ -459,24 +472,66 @@ function bindOrbit(cv) {
   }, { passive: false });
 
   function hover(e) {
-    const uid = pickAt(e), it = uid != null && byUid(uid);
-    cv.style.cursor = it ? 'pointer' : 'grab';
-    if (!it) { tip.hidden = true; return; }
+    const hit = pickHit(e), person = hit?.object.userData.person;
+    const it = hit && !person && byUid(hit.object.userData.uid);
+    cv.style.cursor = !hit ? 'grab' : v3.edit ? 'move' : 'pointer';
+    if (!it && !person) { tip.hidden = true; return; }
     const r = cv.getBoundingClientRect();
-    tip.textContent = CAT[it.id].name;
+    tip.textContent = person ? 'Человек 1,75 м, рука вверх — 2,25 м' : CAT[it.id].name;
     tip.style.left = `${e.clientX - r.left + 14}px`;
     tip.style.top = `${e.clientY - r.top + 14}px`;
     tip.hidden = false;
   }
 }
-function pickAt(e) {
-  const cv = v3.renderer.domElement, r = cv.getBoundingClientRect();
-  const ray = new THREE.Raycaster();
+
+// ---------- Редактирование: предмет или человек едет по горизонтальной плоскости на высоте точки захвата ----------
+function rayAt(e) {
+  const r = v3.renderer.domElement.getBoundingClientRect(), ray = new THREE.Raycaster();
   ray.setFromCamera({ x: (e.clientX - r.left) / r.width * 2 - 1, y: -(e.clientY - r.top) / r.height * 2 + 1 }, v3.cam);
+  return ray;
+}
+function planePoint(e, plane) {
+  const p = rayAt(e).ray.intersectPlane(plane, new THREE.Vector3());
+  return p && { x: p.x * 100, y: p.z * 100 };
+}
+function startDrag(e) {
+  const hit = pickHit(e);
+  if (!hit) return;
+  // Слишком пологий взгляд: плоскость почти параллельна лучу, двигать неудобно — поднимаем её не выше 1 м
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -Math.min(hit.point.y, 1));
+  const p0 = planePoint(e, plane);
+  if (!p0) return;
+  if (hit.object.userData.person) {
+    const g = v3.person;
+    v3.drag = { person: true, plane, p0, x0: g.position.x * 100, y0: g.position.z * 100 };
+    return;
+  }
+  const it = byUid(hit.object.userData.uid);
+  if (!it) return;
+  const list = members(it);
+  state.sel = it.uid;
+  v3.drag = { list, plane, p0, orig: list.map((i) => ({ x: i.x, y: i.y, rot: i.rot })), B0: listBox(list), began: false };
+  render();
+}
+function dragTo(e) {
+  const dr = v3.drag, p = planePoint(e, dr.plane);
+  if (!p) return;
+  const dx = p.x - dr.p0.x, dy = p.y - dr.p0.y, { L, W } = state.room;
+  if (dr.person) {
+    v3.personAt = [clamp(snap(dr.x0 + dx), 25, L - 25), clamp(snap(dr.y0 + dy), 25, W - 25)];
+    v3.person.position.set(v3.personAt[0] / 100, 0, v3.personAt[1] / 100);
+    draw3d();
+    return;
+  }
+  if (!dr.began) { beginChange(); dr.began = true; }
+  dr.list.forEach((i, k) => Object.assign(i, dr.orig[k]));
+  placeList(dr.list, dr.B0.x + dr.B0.w / 2 + dx, dr.B0.y + dr.B0.h / 2 + dy);
+  render();
+}
+function pickHit(e) {
   // Покрытия выбираются, только если под курсором больше ничего нет
-  const hits = ray.intersectObjects(v3.pick.filter((m) => m.visible && m.parent.visible), false);
-  const top = hits.find((h) => CAT[byUid(h.object.userData.uid)?.id]?.kind !== 'floor') || hits[0];
-  return top ? top.object.userData.uid : undefined;
+  const hits = rayAt(e).intersectObjects(v3.pick.filter((m) => m.visible && m.parent.visible), false);
+  return hits.find((h) => h.object.userData.person || CAT[byUid(h.object.userData.uid)?.id]?.kind !== 'floor') || hits[0];
 }
 function snapshot3d() {
   v3.renderer.render(v3.scene, v3.cam);
