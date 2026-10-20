@@ -127,6 +127,10 @@ function drawItem(g, it, c, isSel, sev) {
   if (c.kind === 'wall' && !c.flat) svgEl('line', { x1: -w / 2, y1: -d / 2 + 3, x2: w / 2, y2: -d / 2 + 3, class: 'p-sym strong' }, grp);
   if (c.flat) svgEl('line', { x1: -w / 2, y1: 0, x2: w / 2, y2: 0, class: 'p-sym' }, grp);
   if (it.id === 'rig') for (let i = 0; i <= 4; i++) svgEl('rect', { x: -w / 2 + i * (w - 12) / 4, y: -d / 2, width: 12, height: d, class: 'p-sym fill' }, grp);
+  if (it.id === 'olytramp') {
+    svgEl('rect', { x: -214, y: -107, width: 428, height: 214, rx: 6, class: 'p-sym' }, grp);
+    svgEl('path', { d: 'M-30 0H30M0 -30V30', class: 'p-sym' }, grp);
+  }
   if (it.id === 'minitramp') svgEl('path', { d: `M${-w / 4} 0H${w / 2 + 60}m-18 -12l18 12l-18 12`, class: 'p-sym strong' }, grp);
   if (it.id === 'rack') svgEl('path', { d: `M0 ${-d / 4}V${d / 2 + 70}m-12 -18l12 18l12 -18`, class: 'p-sym strong' }, grp);
   if (it.id === 'rower') svgEl('line', { x1: -w / 2 + 20, y1: 0, x2: w / 2 - 50, y2: 0, class: 'p-sym strong' }, grp);

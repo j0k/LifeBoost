@@ -427,6 +427,16 @@ function buildEquip(g, it, c, w, d, hg, base, m, metal) {
       box3(g, 0.06, 0.32, d, -w / 2 + 0.1, base, 0, metal);
       return;
     }
+    case 'olytramp': {
+      // Рама с синими накладками, тёмная сетка на 1,155 м, по две пары ног
+      const top = 1.155, pad = 0.38, m2 = mat('#2f5fa8');
+      box3(g, w - 2 * pad, 0.01, d - 2 * pad, 0, top - 0.06, 0, mat('#2a2d30'));
+      for (const z of [-d / 2 + pad / 2, d / 2 - pad / 2]) box3(g, w, 0.08, pad, 0, top - 0.08, z, m2);
+      for (const x of [-w / 2 + pad / 2, w / 2 - pad / 2]) box3(g, pad, 0.08, d - 2 * pad, x, top - 0.08, 0, m2);
+      for (const x of [-w / 2 + 0.5, -w / 6, w / 6, w / 2 - 0.5]) for (const z of [-d / 2 + 0.15, d / 2 - 0.15]) box3(g, 0.06, top - 0.1, 0.06, x, base, z, metal);
+      for (const z of [-d / 2 + 0.15, d / 2 - 0.15]) box3(g, w - 0.9, 0.05, 0.05, 0, 0.25, z, metal);
+      return;
+    }
     case 'canes':
       for (const x of [-0.18, 0.18]) {
         cyl(g, 0.02, hg, 'y', x, base + hg / 2, 0, metal);
