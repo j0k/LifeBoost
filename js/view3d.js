@@ -4,7 +4,7 @@ const THREE_SRC = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
 ];
-const HINT3D = tr`тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать`;
+const HINT3D = tr`тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать · из каталога можно перетащить`;
 const HINT3D_EDIT = tr`тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать`;
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
@@ -492,6 +492,33 @@ function bindOrbit(cv) {
   let start = null, pinch = 0, moved = false;
   const tip = $('#tip3d');
   cv.addEventListener('contextmenu', (e) => e.preventDefault());
+  // Перетаскивание из каталога: кольцо показывает, куда встанет, по отпусканию — как на плане
+  const floorAt = (e) => {
+    const p = planePoint(e, new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
+    const { L, W } = state.room;
+    return p && p.x > -50 && p.y > -50 && p.x < L + 50 && p.y < W + 50 ? p : null;
+  };
+  cv.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const p = floorAt(e);
+    if (!v3.dropMark) {
+      v3.dropMark = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(cssVar('--accent')), transparent: true, opacity: 0.85, depthTest: false }));
+      v3.dropMark.rotation.x = -Math.PI / 2;
+      v3.dropMark.renderOrder = 10;
+      v3.scene.add(v3.dropMark);
+    }
+    v3.dropMark.visible = !!p;
+    if (p) v3.dropMark.position.set(p.x / 100, 0.03, p.y / 100);
+    draw3d();
+  });
+  const hideMark = () => { if (v3.dropMark) { v3.dropMark.visible = false; draw3d(); } };
+  cv.addEventListener('dragleave', hideMark);
+  cv.addEventListener('drop', (e) => {
+    e.preventDefault();
+    hideMark();
+    const v = e.dataTransfer.getData('text/plain'), p = floorAt(e) || undefined;
+    if (/^m:/.test(v)) addModule(v.slice(2), p); else if (/^i:/.test(v)) addItem(v.slice(2), p);
+  });
   cv.addEventListener('pointerdown', (e) => {
     cv.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });

@@ -136,7 +136,7 @@ const I18N_EN = {
   'Курс доллара': 'Dollar rate', 'Курс евро': 'Euro rate', 'Курс франка': 'Franc rate', 'CHF франках': 'CHF francs',
 
   // ---------- 3D ----------
-  'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать': 'drag — rotate · right button or Shift — pan · wheel — zoom · click — select',
+  'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать · из каталога можно перетащить': 'drag — rotate · right button or Shift — pan · wheel — zoom · click — select · drag items in from the catalog',
   'тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать': 'drag an item or the person — move along the floor · R — rotate · Delete — delete · empty space — rotate view',
   'нет связи с CDN': 'can’t reach the CDN',
   '3D не загрузился: {0}': '3D failed to load: {0}',
@@ -156,7 +156,7 @@ const I18N_EN = {
   'Длина, м': 'Length, m', '(стена А)': '(wall A)', 'Ширина, м': 'Width, m', 'Потолок, м': 'Ceiling, m',
   'Что показывать на плане': 'What to show on the plan',
   'Зоны': 'Zones', 'Размеры': 'Dimensions', 'Подписи': 'Labels', 'Марки': 'Item no.',
-  'Каталог': 'Catalog', 'клик или перетащить на план': 'click or drag onto the plan',
+  'Каталог': 'Catalog', 'клик или перетащить на план или в 3D': 'click or drag onto the plan or 3D view',
   'Поиск: турник, мат, коврик…': 'Search: pull-up bar, mat, yoga mat…', 'Поиск по каталогу': 'Search the catalog',
   'План': 'Plan', 'Вид': 'View', 'План зала': 'Room plan',
   'сетка 0,5 м · штриховка — зоны безопасности · красное — нарушения': 'grid 0.5 m · hatching — safety zones · red — issues',
