@@ -153,6 +153,7 @@ $('#checks').onclick = (e) => {
 $('#walls').onclick = (e) => { const r = e.target.closest('[data-uid]'); if (r) { state.sel = +r.dataset.uid; render(); } };
 $('#bom').addEventListener('click', onBom);
 $('#bom').addEventListener('change', onBomChange);
+$('#money').addEventListener('change', onMoney);
 document.addEventListener('keydown', onKey);
 
 (function init() {

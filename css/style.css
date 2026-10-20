@@ -235,6 +235,10 @@ a.btn { color: inherit; text-decoration: none; font-size: 13px; letter-spacing: 
 
 /* Спецификация */
 #bom { overflow-x: auto; }
+.money { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.money select, .money input { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; color: var(--ink); }
+.money .rate-in { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-size: 14px; }
+.money input { width: 84px; }
 .bom { width: 100%; border-collapse: collapse; font-size: 14px; }
 .bom th { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .bom td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }

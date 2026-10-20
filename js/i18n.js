@@ -127,6 +127,13 @@ const I18N_EN = {
   'Пока пусто: добавьте модули из каталога.': 'Empty so far: add modules from the catalog.',
   'Ед.': 'Unit', 'Цена от': 'Price from', 'Цена до': 'Price to', 'Сумма от': 'Total from', 'Сумма до': 'Total to',
   'Уже есть': 'Owned', 'да': 'yes',
+  'Цены ориентировочные, рынок США, 2026 год: «эконом» — «проф». Без доставки, монтажа и налога с продаж.': 'Prices are rough estimates for the US market, 2026: “budget” — “pro”. Delivery, installation and sales tax not included.',
+  'Цены ориентировочные, Россия, 2026 год: «эконом» — «проф». Без доставки и монтажа.': 'Prices are rough estimates for the Russian market, 2026: “budget” — “pro”. Delivery and installation not included.',
+  'Пересчитано по курсу, который задан выше.': 'Converted at the exchange rate set above.',
+  'Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.': 'Tick “owned” for what you already have — it drops out of the amount to buy.',
+  'Цены': 'Prices', 'Россия, ₽': 'Russia, ₽', 'США, $': 'USA, $',
+  'Показывать в': 'Show in', '₽ рублях': '₽ rubles', '$ долларах': '$ dollars', '€ евро': '€ euros',
+  'Курс доллара': 'Dollar rate', 'Курс евро': 'Euro rate',
 
   // ---------- 3D ----------
   'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать': 'drag — rotate · right button or Shift — pan · wheel — zoom · click — select',

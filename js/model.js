@@ -10,6 +10,8 @@ const state = {
   owned: new Set(), // позиции, которые уже куплены: в закупку не идут
   sel: null,
   view: { zones: true, dims: true, labels: true, marks: false },
+  // Цены: mkt — чей ценник (ru — рубли, us — доллары), cur — в чём показывать; rub — ₽ за 1 $, eur — $ за 1 €
+  money: { mkt: EN ? 'us' : 'ru', cur: EN ? 'USD' : 'RUB', rub: 90, eur: 1.1 },
 };
 let uidSeq = 1, grpSeq = 1;
 
@@ -190,6 +192,7 @@ function serialize() {
     v: 1, n: state.name, r: [L, W, H],
     i: state.items.map((it) => [it.id, it.x, it.y, it.rot, it.w, it.d, it.g, it.m || '']),
     k: state.kits, o: [...state.owned],
+    c: [state.money.mkt, state.money.cur, state.money.rub, state.money.eur],
   };
 }
 function load(o) {
@@ -207,6 +210,14 @@ function load(o) {
   state.kits = {};
   for (const [k, n] of Object.entries(o.k || {})) if (CAT[k]?.kind === 'kit' && n > 0) state.kits[k] = Math.min(999, Math.trunc(n));
   state.owned = new Set((o.o || []).filter((k) => CAT[k]));
+  // Валюта — если в проекте её нет, остаётся та, что у зрителя
+  if (Array.isArray(o.c)) {
+    const [mkt, cur, rub, eur] = o.c;
+    if (mkt === 'ru' || mkt === 'us') state.money.mkt = mkt;
+    if (['RUB', 'USD', 'EUR'].includes(cur)) state.money.cur = cur;
+    if (rub > 0 && rub < 1e4) state.money.rub = +rub;
+    if (eur > 0 && eur < 100) state.money.eur = +eur;
+  }
   state.sel = null;
 }
 function beginChange() {

@@ -151,3 +151,20 @@ const CATALOG = [
   { id: 'aidkit', grp: 'kit', disc: 'base', kind: 'kit', name: 'Аптечка', price: [1500, 4000] },
 ];
 const CAT = Object.fromEntries(CATALOG.map((c) => [c.id, c]));
+
+// Цены рынка США, доллары, 2026 (вилка «budget – pro»). Тоже ориентир: сверяйте с поставщиками.
+const PRICE_US = {
+  tatami: [30, 60], rubber: [35, 75], hardfloor: [25, 60],
+  airtrack: [700, 2000], gymmat: [120, 300], crash: [500, 1200], canes: [100, 400], minitramp: [400, 1200],
+  silks: [400, 1000], hoop: [300, 800],
+  aypad: [150, 350], aycrash: [200, 450],
+  yogamat: [25, 130], yogawall: [300, 900],
+  wallbars: [200, 600], barre: [100, 350], splits: [150, 450],
+  homebar: [60, 250], wallrig: [700, 2000], rig: [2500, 8000], rack: [1200, 4000], platform: [400, 1500],
+  rower: [700, 1300], bike: [800, 1500], kbrack: [700, 1800], dbrack: [800, 2500], plyo: [150, 450],
+  wallball: [150, 500], rope: [150, 400],
+  mirror: [150, 300], storage: [150, 500], bench: [150, 450],
+  bands: [25, 80], blocks: [15, 40], strap: [8, 20], bolster: [35, 90], roller: [15, 60], jumprope: [15, 50],
+  kb16: [50, 110], dbadj: [150, 400], medball: [60, 140], chalk: [25, 60], timer: [100, 350], lunge: [150, 400], aidkit: [25, 60],
+};
+for (const c of CATALOG) c.usd = PRICE_US[c.id] || [0, 0];

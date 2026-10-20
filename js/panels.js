@@ -7,11 +7,20 @@ function qtyOf(id, w, d) {
   const c = CAT[id];
   return c.unit === 'm2' ? (w * d) / 1e4 : c.unit === 'm' ? w / 100 : 1;
 }
+// Цена позиции в выбранной валюте: [эконом, проф]
+function priceOf(c) {
+  const { mkt, cur, rub, eur } = state.money;
+  const usd = (v) => (mkt === 'us' ? v : v / rub);
+  const to = (v) => (cur === 'USD' ? usd(v) : cur === 'EUR' ? usd(v) / eur : mkt === 'ru' ? v : v * rub);
+  return (mkt === 'us' ? c.usd : c.price).map(to);
+}
+const needRub = () => (state.money.mkt === 'ru') !== (state.money.cur === 'RUB');
+const needEur = () => state.money.cur === 'EUR';
 const unitName = (c) => (c.unit === 'm2' ? tr`м²` : c.unit === 'm' ? tr`м` : tr`шт`);
 function moduleCost(mod) {
   let lo = 0, hi = 0;
-  for (const [id, , , , w, d] of mod.items) { const q = qtyOf(id, w ?? CAT[id].w, d ?? CAT[id].d); lo += CAT[id].price[0] * q; hi += CAT[id].price[1] * q; }
-  for (const [id, n] of Object.entries(mod.kits || {})) { lo += CAT[id].price[0] * n; hi += CAT[id].price[1] * n; }
+  for (const [id, , , , w, d] of mod.items) { const q = qtyOf(id, w ?? CAT[id].w, d ?? CAT[id].d), p = priceOf(CAT[id]); lo += p[0] * q; hi += p[1] * q; }
+  for (const [id, n] of Object.entries(mod.kits || {})) { const p = priceOf(CAT[id]); lo += p[0] * n; hi += p[1] * n; }
   return [lo, hi];
 }
 
@@ -29,7 +38,7 @@ function bomRows() {
   for (const [id, n] of Object.entries(state.kits)) if (n > 0) add(id, n);
   const gi = (g) => GROUPS.findIndex((x) => x.id === g);
   return [...rows.values()].sort((a, b) => gi(a.c.grp) - gi(b.c.grp) || CATALOG.indexOf(a.c) - CATALOG.indexOf(b.c))
-    .map((r, i) => ({ ...r, mark: i + 1, sum: [r.c.price[0] * r.qty, r.c.price[1] * r.qty] }));
+    .map((r, i) => { const p = priceOf(r.c); return { ...r, mark: i + 1, price: p, sum: [p[0] * r.qty, p[1] * r.qty] }; });
 }
 function computeMarks() { MARKS = new Map(bomRows().map((r) => [r.id, r.mark])); }
 
@@ -68,7 +77,7 @@ function renderPalette() {
     html += its.map((c) => {
       const kit = c.kind === 'kit';
       const sub = kit ? tr`в закупке: ${state.kits[c.id] || 0} шт` : tr`${fmtM(c.w)} × ${fmtM(c.d)} м` + (c.resize ? tr`, тянется` : '');
-      const pr = c.price[1] ? `${fmtRange(c.price)}${c.unit ? '/' + unitName(c) : ''}` : '—';
+      const pr = c.price[1] ? `${fmtRange(priceOf(c))}${c.unit ? '/' + unitName(c) : ''}` : '—';
       return `<button type="button" class="card" data-add="i:${c.id}" ${kit ? '' : 'draggable="true"'}>
         ${kit ? `<span class="kit-ico" style="--c:${DISC[c.disc].color}">+</span>` : iconSvg([{ ...rect(0, 0, c.w, c.d), f: c.kind === 'floor' }], DISC[c.disc].color)}
         <span class="ct"><b>${esc(c.name)}</b><span class="hint">${sub}</span></span><span class="pr">${pr}</span></button>`;
@@ -115,7 +124,7 @@ function renderInspector() {
       ${c.elev ? `<dt>${tr`На стене`}</dt><dd>${tr`от +${fmtM(c.elev[0])} до +${fmtM(c.elev[0] + c.elev[1])} м`}</dd>` : ''}
       ${c.needFloor ? `<dt>${tr`Покрытие`}</dt><dd>${FLOORS[c.needFloor]}</dd>` : ''}
       ${capTxt ? `<dt>${tr`Занимаются`}</dt><dd>${capTxt}</dd>` : ''}
-      ${c.price[1] ? `<dt>${tr`Цена`}</dt><dd>${fmtRange(c.price.map((p) => p * q))}${c.unit ? ` <span class="hint">(${fmtNum(q, 1)} ${unitName(c)} × ${fmtRange(c.price)})</span>` : ''}</dd>` : ''}
+      ${c.price[1] ? `<dt>${tr`Цена`}</dt><dd>${fmtRange(priceOf(c).map((p) => p * q))}${c.unit ? ` <span class="hint">(${fmtNum(q, 1)} ${unitName(c)} × ${fmtRange(priceOf(c))})</span>` : ''}</dd>` : ''}
     </dl>
     ${c.note ? `<p class="note">${esc(c.note)}</p>` : ''}
     ${issues.length ? `<ul class="issues">${issues.map((p) => `<li class="${p.sev}">${esc(p.text)}</li>`).join('')}</ul>` : `<p class="ok-line">${tr`Здесь всё в порядке`}</p>`}`;
@@ -187,11 +196,12 @@ function renderStats() {
   const rows = bomRows();
   const sum = rows.reduce((s, r) => [s[0] + r.sum[0], s[1] + r.sum[1]], [0, 0]);
   const buy = rows.filter((r) => !state.owned.has(r.id)).reduce((s, r) => [s[0] + r.sum[0], s[1] + r.sum[1]], [0, 0]);
+  const k = state.money.cur === 'RUB' ? 1000 : 10, rnd = (s) => s.map((v) => Math.round(v / k) * k);
   $('#stats').innerHTML = `
     <div class="totals">
       <div><span class="hint">${tr`Площадь`}</span><b>${tr`${fmtNum(total, 1)} м²`}</b><span class="hint">${tr`${fmtM(L)} × ${fmtM(W)} м, потолок ${fmtM(H)} м`}</span></div>
       <div><span class="hint">${tr`Занято снарядами и зонами`}</span><b>${Math.round((occ / total) * 100)}%</b><span class="hint">${tr`свободно ≈${fmtNum(total - occ, 1)} м²`}</span></div>
-      <div><span class="hint">${tr`Бюджет на всё`}</span><b>${fmtRange(sum.map((v) => Math.round(v / 1000) * 1000))}</b><span class="hint">${tr`к покупке: ${fmtRange(buy.map((v) => Math.round(v / 1000) * 1000))}`}</span></div>
+      <div><span class="hint">${tr`Бюджет на всё`}</span><b>${fmtRange(rnd(sum))}</b><span class="hint">${tr`к покупке: ${fmtRange(rnd(buy))}`}</span></div>
     </div>
     <div class="caps">${CAP_DISC.map((k) => `<div class="cap"><span>${DISC[k].name}</span><span class="bar"><i style="width:${(cap[k] / maxCap) * 100}%;--c:${DISC[k].color}"></i></span><b>${cap[k]}</b></div>`).join('')}</div>
     <p class="hint">${tr`Вместимость — сколько человек одновременно занимается на поставленных снарядах.`}
@@ -212,7 +222,7 @@ function renderBom() {
       : `${fmtNum(r.qty, 1)}`;
     return `${head}<tr class="${state.owned.has(r.id) ? 'owned' : ''}">
       <td class="mk">${r.mark}</td><td>${esc(r.c.name)}</td><td class="num">${qty} ${unitName(r.c)}</td>
-      <td class="num">${fmtRange(r.c.price)}</td><td class="num">${fmtRange(r.sum)}</td>
+      <td class="num">${fmtRange(r.price)}</td><td class="num">${fmtRange(r.sum)}</td>
       <td class="own"><label title="${tr`Уже есть — не покупать`}"><input type="checkbox" data-own="${r.id}" ${state.owned.has(r.id) ? 'checked' : ''}><span>${tr`есть`}</span></label></td></tr>`;
   }).join('');
   const all = tot(() => true), buy = tot((r) => !state.owned.has(r.id));
@@ -220,6 +230,33 @@ function renderBom() {
     <tbody>${body}</tbody><tfoot><tr><td></td><td>${tr`Итого`}</td><td></td><td></td><td class="num">${fmtRange(all)}</td><td></td></tr>
     <tr class="buy"><td></td><td>${tr`К покупке`}</td><td></td><td></td><td class="num">${fmtRange(buy)}</td><td></td></tr></tfoot></table>`
     : `<p class="hint">${tr`Пока пусто: добавьте модули из каталога.`}</p>`;
+  const m = state.money;
+  $('#priceNote').textContent = (m.mkt === 'us'
+    ? tr`Цены ориентировочные, рынок США, 2026 год: «эконом» — «проф». Без доставки, монтажа и налога с продаж.`
+    : tr`Цены ориентировочные, Россия, 2026 год: «эконом» — «проф». Без доставки и монтажа.`)
+    + (needRub() || needEur() ? ' ' + tr`Пересчитано по курсу, который задан выше.` : '')
+    + ' ' + tr`Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.`;
+  renderMoney();
+}
+function renderMoney() {
+  const m = state.money;
+  $('#mkt').value = m.mkt;
+  $('#cur').value = m.cur;
+  for (const [id, v] of [['rub', m.rub], ['eur', m.eur]]) if (document.activeElement !== $('#' + id)) $('#' + id).value = String(v);
+  $('#rateRub').hidden = !needRub();
+  $('#rateEur').hidden = !needEur();
+}
+function onMoney(e) {
+  const id = e.target.id, m = state.money;
+  if (!['mkt', 'cur', 'rub', 'eur'].includes(id)) return;
+  let v = e.target.value;
+  if (id === 'rub' || id === 'eur') {
+    v = parseFloat(String(v).replace(',', '.'));
+    if (!(v > 0)) return renderMoney();
+  }
+  beginChange();
+  m[id] = v;
+  render();
 }
 function onBom(e) {
   const k = e.target.closest('[data-kit]');
@@ -241,7 +278,7 @@ function onBomChange(e) {
 function bomCsv() {
   const rows = bomRows();
   const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-  const lines = [[tr`Поз.`, tr`Наименование`, tr`Кол-во`, tr`Ед.`, tr`Цена от`, tr`Цена до`, tr`Сумма от`, tr`Сумма до`, tr`Уже есть`].map(q).join(';')];
-  for (const r of rows) lines.push([r.mark, r.c.name, fmtNum(r.qty, 2), unitName(r.c), r.c.price[0], r.c.price[1], Math.round(r.sum[0]), Math.round(r.sum[1]), state.owned.has(r.id) ? tr`да` : ''].map(q).join(';'));
+  const lines = [[tr`Поз.`, tr`Наименование`, tr`Кол-во`, tr`Ед.`, ...[tr`Цена от`, tr`Цена до`, tr`Сумма от`, tr`Сумма до`].map((h) => `${h}, ${state.money.cur}`), tr`Уже есть`].map(q).join(';')];
+  for (const r of rows) lines.push([r.mark, r.c.name, fmtNum(r.qty, 2), unitName(r.c), Math.round(r.price[0]), Math.round(r.price[1]), Math.round(r.sum[0]), Math.round(r.sum[1]), state.owned.has(r.id) ? tr`да` : ''].map(q).join(';'));
   download(`${fileBase()}-${EN ? 'shopping' : 'zakupka'}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
 }
