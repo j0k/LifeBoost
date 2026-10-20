@@ -9,6 +9,7 @@ const HINT3D_EDIT = tr`тяните предмет или человека — �
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
   on: false, loading: null, renderer: null, scene: null, cam: null, root: null, walls: [], pick: [],
+  env: (() => { try { const e = localStorage.getItem('lifeboost.env'); return e in ENVS ? e : 'none'; } catch (e) { return 'none'; } })(), envGroup: null,
   mats: new Map(), pendingCam: null, edit: false, personAt: null, person: null, drag: null, orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
 };
 
@@ -52,6 +53,10 @@ function init3d() {
   new ResizeObserver(fit3d).observe(box);
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => v3.on && build3d());
   bindOrbit(v3.renderer.domElement);
+  const envSel = $('#env3d');
+  envSel.innerHTML = Object.entries(ENVS).map(([k, e]) => `<option value="${k}">${e.name}</option>`).join('');
+  envSel.value = v3.env;
+  envSel.onchange = () => setEnv(envSel.value, true);
   box.querySelector('.v3-tools').onclick = (e) => {
     const b = e.target.closest('[data-cam]');
     if (!b) return;
@@ -62,6 +67,7 @@ function init3d() {
     if (k === 'top') { o.th = 0; o.ph = 0.02; }
     if (k === 'front') { o.th = 0; o.ph = 1.35; }
     if (k === 'home') { o.th = ORBIT0.th; o.ph = ORBIT0.ph; }
+    if (k === 'inside') return lookInside();
     resetTarget();
     draw3d();
   };
@@ -80,7 +86,31 @@ function resetTarget() {
   const { L, W, H } = state.room;
   v3.orbit.t = new THREE.Vector3(L / 200, Math.min(H / 100, 4) * 0.25, W / 200);
   v3.orbit.r = Math.max(L, W) / 100 * 1.45 + H / 100 * 1.3;
+  if (v3.orbit.ph > 1.52) v3.orbit.ph = ORBIT0.ph;
 }
+// Окружение: выбор сохраняется у зрителя; при смене камера отъезжает, чтобы было видно, где зал
+function setEnv(k, showcase) {
+  v3.env = k in ENVS ? k : 'none';
+  try { localStorage.setItem('lifeboost.env', v3.env); } catch (e) { /* без сохранения */ }
+  if ($('#env3d')) $('#env3d').value = v3.env;
+  if (showcase && v3.orbit.t) {
+    resetTarget();
+    const o = v3.orbit;
+    o.th = ORBIT0.th;
+    if (v3.env === 'tower') { o.r *= 4.5; o.ph = 1.2; } else if (v3.env !== 'none') { o.r *= 1.8; o.ph = 1.12; } else o.ph = ORBIT0.ph;
+  }
+  build3d();
+}
+// Взгляд изнутри: камера на высоте глаз; дальше тянуть — оглядываться, правой кнопкой — ходить
+function lookInside() {
+  const { L, W } = state.room, o = v3.orbit;
+  // Из угла стен В и Г по диагонали на угол А–Б: там панорамные окна
+  o.t = new THREE.Vector3(Math.min(1.2, L / 200), 1.6, Math.max(W / 100 - 1.2, W / 200));
+  o.r = 0.05; o.th = -Math.atan2(L / 100, W / 100); o.ph = Math.PI / 2 + 0.08;
+  draw3d();
+}
+const PH_LIM = () => (v3.orbit.r < 1.2 ? [0.25, 2.85] : [0.02, 1.52]);
+const R_MAX = () => ENVS[v3.env].rMax;
 
 // ---------- Материалы: цвета берём из тех же токенов, что и у плана ----------
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
@@ -122,7 +152,10 @@ function build3d() {
   if (v3.pendingCam) {
     // Ракурс из ссылки
     const [th, ph, r, x, y, z] = v3.pendingCam;
-    Object.assign(v3.orbit, { th, ph: clamp(ph, 0.02, 1.52), r: clamp(r, 1, 80), t: new THREE.Vector3(x, y, z) });
+    if (v3.pendingCam[6] != null) v3.env = Object.keys(ENVS)[v3.pendingCam[6]] || 'none';
+    const rr = clamp(r, 0.05, R_MAX());
+    Object.assign(v3.orbit, { th, ph: clamp(ph, ...(rr < 1.2 ? [0.25, 2.85] : [0.02, 1.52])), r: rr, t: new THREE.Vector3(x, y, z) });
+    if ($('#env3d')) $('#env3d').value = v3.env;
     v3.pendingCam = null;
     v3.sig = sig;
   } else if (sig !== v3.sig || !v3.orbit.t) { v3.sig = sig; resetTarget(); }
@@ -132,7 +165,18 @@ function build3d() {
   }
   for (const m of v3.mats.values()) m.dispose();
   v3.mats.clear();
-  v3.scene.background = new THREE.Color(cssVar('--plan-bg'));
+  // Окружение строится один раз на зал и вид; перетаскивание предметов его не трогает
+  const E = ENVS[v3.env], envSig = `${v3.env}:${sig}`;
+  if (v3.envGroup && v3.envGroup.userData.sig !== envSig) { v3.scene.remove(v3.envGroup); disposeEnv(v3.envGroup); v3.envGroup = null; }
+  if (v3.env !== 'none' && !v3.envGroup) {
+    v3.envGroup = buildEnv(v3.env, l, w, h);
+    v3.envGroup.userData.sig = envSig;
+    v3.scene.add(v3.envGroup);
+  }
+  v3.scene.background = new THREE.Color(E.sky ? E.sky[1] : cssVar('--plan-bg'));
+  v3.scene.fog = E.fog ? new THREE.Fog(E.fog[0], E.fog[1], E.fog[2]) : null;
+  v3.cam.far = E.sky ? 12000 : 300;
+  v3.cam.updateProjectionMatrix();
   const root = v3.root = new THREE.Group();
   v3.scene.add(root);
   v3.pick = [];
@@ -146,17 +190,18 @@ function build3d() {
   for (let x = 1; x < l; x++) pts.push(x, 0.001, 0, x, 0.001, w);
   for (let z = 1; z < w; z++) pts.push(0, 0.001, z, l, 0.001, z);
   root.add(lines(pts, cssVar('--line')));
-  const T = WALL_T / 100, wm = mat(cssVar('--line'));
+  const T = WALL_T / 100, glaze = E.glaze || [];
   v3.walls = [
-    box3(root, l + 2 * T, h, T, l / 2, 0, -T / 2, wm),
-    box3(root, T, h, w + 2 * T, l + T / 2, 0, w / 2, wm),
-    box3(root, l + 2 * T, h, T, l / 2, 0, w + T / 2, wm),
-    box3(root, T, h, w + 2 * T, -T / 2, 0, w / 2, wm),
+    wall3d(root, l + 2 * T, h, l / 2, -T / 2, 0, glaze.includes(0)),
+    wall3d(root, w + 2 * T, h, l + T / 2, w / 2, Math.PI / 2, glaze.includes(1)),
+    wall3d(root, l + 2 * T, h, l / 2, w + T / 2, 0, glaze.includes(2)),
+    wall3d(root, w + 2 * T, h, -T / 2, w / 2, Math.PI / 2, glaze.includes(3)),
   ];
   root.add(lines([0, h, 0, l, h, 0, l, h, 0, l, h, w, l, h, w, 0, h, w, 0, h, w, 0, h, 0], cssVar('--muted')));
   [[l / 2, -0.5], [l + 0.5, w / 2], [l / 2, w + 0.5], [-0.5, w / 2]].forEach(([x, z], i) => {
     const s = letter(WALL_NAMES[i]);
     s.position.set(x, 0.3, z);
+    s.userData.letter = true;
     root.add(s);
   });
 
@@ -192,6 +237,21 @@ function build3d() {
   v3.sun.position.set(l * 0.3, h * 3 + 4, -w * 0.4);
   v3.sun.target.position.set(l / 2, 0, w / 2);
   draw3d();
+}
+// Стена: сплошная или панорамное остекление (подоконник, стекло с импостами, перемычка)
+function wall3d(root, len, h, x, z, rot, glass) {
+  const g = new THREE.Group(), T = WALL_T / 100, wm = mat(cssVar('--line'));
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  root.add(g);
+  if (!glass) { box3(g, len, h, T, 0, 0, 0, wm); return g; }
+  const sill = 0.35, lintel = Math.min(0.4, h * 0.12), gh = h - sill - lintel;
+  box3(g, len, sill, T, 0, 0, 0, wm);
+  box3(g, len, lintel, T, 0, h - lintel, 0, wm);
+  box3(g, len - 0.02, gh, 0.02, 0, sill, 0, mat('#a8d0e6', { op: 0.18, shiny: true }));
+  const n = Math.max(1, Math.round(len / 1.6));
+  for (let i = 0; i <= n; i++) box3(g, 0.06, gh, T * 0.8, -len / 2 + 0.03 + i * (len - 0.06) / n, sill, 0, mat('#5d6669'));
+  return g;
 }
 function lines(pts, color, op) {
   const geo = new THREE.BufferGeometry();
@@ -407,7 +467,13 @@ function draw3d() {
     const p = v3.cam.position, l = L / 100, w = W / 100;
     const hide = [p.z < 0, p.x > l, p.z > w, p.x < 0];
     v3.walls.forEach((m, i) => { m.visible = !hide[i] || o.ph < 0.15; });
-    for (const g of v3.root.children) if (g.userData.side != null) g.visible = v3.walls[g.userData.side].visible;
+    // Изнутри видно ближе, снаружи — до горизонта
+    const nearC = o.r < 1.2 ? 0.05 : 0.3;
+    if (v3.cam.near !== nearC) { v3.cam.near = nearC; v3.cam.updateProjectionMatrix(); }
+    for (const g of v3.root.children) {
+      if (g.userData.side != null) g.visible = v3.walls[g.userData.side].visible;
+      if (g.userData.letter) g.visible = o.r >= 1.2;
+    }
     v3.renderer.render(v3.scene, v3.cam);
   });
 }
@@ -437,7 +503,7 @@ function bindOrbit(cv) {
     const o = v3.orbit;
     if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()], dist = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch) o.r = clamp(o.r * pinch / dist, 1, 80);
+      if (pinch) o.r = clamp(o.r * pinch / dist, 0.05, R_MAX());
       pinch = dist;
     } else if (e.buttons & 2 || e.buttons & 4 || e.shiftKey) {
       const k = o.r / cv.clientHeight * 0.9;
@@ -446,7 +512,7 @@ function bindOrbit(cv) {
       o.t.addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k);
     } else {
       o.th -= dx * 0.008;
-      o.ph = clamp(o.ph - dy * 0.008, 0.02, 1.52);
+      o.ph = clamp(o.ph - dy * 0.008, ...PH_LIM());
     }
     draw3d();
   });
@@ -467,7 +533,9 @@ function bindOrbit(cv) {
   cv.addEventListener('pointerleave', () => { tip.hidden = true; });
   cv.addEventListener('wheel', (e) => {
     e.preventDefault();
-    v3.orbit.r = clamp(v3.orbit.r * Math.exp(e.deltaY * 0.001), 1, 80);
+    const o = v3.orbit;
+    o.r = clamp(o.r * Math.exp(e.deltaY * 0.001), 0.05, R_MAX());
+    o.ph = clamp(o.ph, ...PH_LIM());
     draw3d();
   }, { passive: false });
 

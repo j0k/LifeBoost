@@ -91,7 +91,7 @@
       </div>
       <div class="plan-wrap"><svg id="plan" tabindex="0" role="img" aria-label="План зала"></svg>
         <div id="view3d" hidden>
-          <div class="v3-tools"><button type="button" class="tgl" data-cam="edit" aria-pressed="false" title="Двигать предметы и человека мышью">Двигать</button><button type="button" class="btn sm" data-cam="home">Обзор</button><button type="button" class="btn sm" data-cam="top">Сверху</button><button type="button" class="btn sm" data-cam="front">С пола</button><button type="button" class="btn sm" data-cam="png">PNG</button><button type="button" class="btn sm" data-cam="share" title="Ссылка на проект с этим ракурсом">Ссылка</button></div>
+          <div class="v3-tools"><button type="button" class="tgl" data-cam="edit" aria-pressed="false" title="Двигать предметы и человека мышью">Двигать</button><select class="btn sm" id="env3d" aria-label="Окружение" title="Где стоит зал"></select><button type="button" class="btn sm" data-cam="home">Обзор</button><button type="button" class="btn sm" data-cam="inside" title="Встать в зале и оглядеться">Изнутри</button><button type="button" class="btn sm" data-cam="top">Сверху</button><button type="button" class="btn sm" data-cam="front">С пола</button><button type="button" class="btn sm" data-cam="png">PNG</button><button type="button" class="btn sm" data-cam="share" title="Ссылка на проект с этим ракурсом">Ссылка</button></div>
           <div class="v3-tip" id="tip3d" hidden></div>
         </div></div>
     </section>
@@ -148,6 +148,7 @@
 <script src="js/checks.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/drawings.js"></script>
+<script src="js/env3d.js"></script>
 <script src="js/view3d.js"></script>
 <script src="js/panels.js"></script>
 <script src="js/main.js"></script>

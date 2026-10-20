@@ -81,7 +81,7 @@ function share() {
   let url = (EN ? enUrl() : location.href.split('#')[0]) + '#p=' + encodeShare();
   // Если смотрят в 3D — ссылка откроет 3D с тем же ракурсом
   const o = v3.orbit, cam = v3.on && o.t;
-  if (cam) url += '&v=' + [o.th, o.ph, o.r, o.t.x, o.t.y, o.t.z].map((n) => +n.toFixed(3)).join(',');
+  if (cam) url += '&v=' + [o.th, o.ph, o.r, o.t.x, o.t.y, o.t.z].map((n) => +n.toFixed(3)).concat(Object.keys(ENVS).indexOf(v3.env)).join(',');
   const done = () => toast(cam ? tr`Ссылка на проект и ракурс 3D скопирована` : tr`Ссылка на проект скопирована`);
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => { history.replaceState(null, '', url); toast(tr`Ссылка в адресной строке — скопируйте её`); });
   else { history.replaceState(null, '', url); toast(tr`Ссылка в адресной строке — скопируйте её`); }
@@ -159,7 +159,7 @@ document.addEventListener('keydown', onKey);
 (function init() {
   const m = location.hash.match(/#p=([\w-]+)/), v = location.hash.match(/[#&]v=([-\d.,]+)/);
   const cam = v && v[1].split(',').map(Number);
-  if (cam && cam.length === 6 && cam.every(Number.isFinite)) v3.pendingCam = cam;
+  if (cam && (cam.length === 6 || cam.length === 7) && cam.every(Number.isFinite)) v3.pendingCam = cam;
   if (m) {
     try { load(decodeShare(m[1])); history.replaceState(null, '', location.pathname + location.search); return; }
     catch (e) { v3.pendingCam = null; toast(tr`Ссылка на проект повреждена, открыт последний план`); }
