@@ -72,8 +72,13 @@ function onKey(e) {
   else if (k === 'Escape') { state.sel = null; render(); }
 }
 
+// Английская версия делится адресом /en/: у него свои метатеги, и превью в соцсетях тоже на английском
+function enUrl() {
+  const base = location.href.split('#')[0].split('?')[0].replace(/index\.html$/, '');
+  return location.protocol === 'file:' ? base + 'index.html?lang=en' : base + 'en/';
+}
 function share() {
-  let url = location.href.split('#')[0] + '#p=' + encodeShare();
+  let url = (EN ? enUrl() : location.href.split('#')[0]) + '#p=' + encodeShare();
   // Если смотрят в 3D — ссылка откроет 3D с тем же ракурсом
   const o = v3.orbit, cam = v3.on && o.t;
   if (cam) url += '&v=' + [o.th, o.ph, o.r, o.t.x, o.t.y, o.t.z].map((n) => +n.toFixed(3)).join(',');
@@ -87,6 +92,7 @@ translateData();
 translateDom();
 $('#hint3d').textContent = HINT3D;
 if (EN) Object.assign($('#langLink'), { href: location.pathname, hreflang: 'ru', lang: 'ru', title: 'Русский', textContent: 'RU' });
+else $('#langLink').href = enUrl();
 buildPlan();
 $('#tplSel').innerHTML = `<option value="">${tr`Шаблон зала…`}</option>` + TEMPLATES.map((t) =>
   `<option value="${t.id}">${t.name} · ${tr`${fmtM(t.room[0])}×${fmtM(t.room[1])} м`}</option>`).join('');
