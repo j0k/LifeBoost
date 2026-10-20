@@ -204,9 +204,9 @@ function translateDom(root = document) {
 // Перевод данных: каталог, модули, шаблоны. Вызывается, когда все данные уже объявлены.
 function translateData() {
   if (!EN) return;
-  const D = { acro: 'Acrobatics', ay: 'Acroyoga', yoga: 'Yoga', str: 'Stretching', cf: 'CrossFit', base: 'Room' };
+  const D = { acro: 'Acrobatics', ay: 'Acroyoga', yoga: 'Yoga', str: 'Stretching', cf: 'CrossFit', ma: 'Martial arts', base: 'Room' };
   for (const k in D) DISC[k].name = D[k];
-  const G = { floor: 'Flooring', acro: 'Acrobatics', ay: 'Acroyoga', yoga: 'Yoga', str: 'Stretching', cf: 'CrossFit & strength', room: 'Room', kit: 'Small gear' };
+  const G = { floor: 'Flooring', acro: 'Acrobatics', ay: 'Acroyoga', yoga: 'Yoga', str: 'Stretching', cf: 'CrossFit & strength', ma: 'Martial arts', room: 'Room', kit: 'Small gear' };
   for (const g of GROUPS) g.name = G[g.id] || g.name;
   Object.assign(FLOORS, { tatami: 'tatami', rubber: 'rubber flooring', hard: 'sports flooring' });
   ['L-basing: flyer standing on the base’s feet', 'Standing on shoulders, 2 levels', 'Flyer toss'].forEach((n, i) => { ACRO_LEVELS[i].name = n; });
@@ -221,6 +221,8 @@ function translateData() {
     crash: ['Crash mat 2×2×0.3 m', 'Crash mat', 'Goes under a rigging point, a climbing rope and the landing zone of a trampoline.'],
     canes: ['Handstand canes', 'Canes'],
     olytramp: ['Olympic trampoline 5.05×2.91 m (bed 4.28×2.14)', 'Olympic tramp', 'FIG standard: 5.05 × 2.91 m frame, 1.155 m high. Needs 8 m above the bed, 10 m is better. End decks or 2 m mats at both ends, mats along the sides. One jumper at a time, with a spotter.'],
+    wallpad: ['Wall pad 2 m (soft wall protection)', 'Wall pad', '5 cm foam in a PVC cover, fixed to the wall. Used by trampolines, air tracks, behind rings and silks: if a safety zone runs into a wall, the pad protects it.'],
+    mookjong: ['Wing Chun wooden dummy (mook jong) on a frame', 'Mook jong', 'Ø 23 cm trunk, three arms and a leg. The frame absorbs strikes: free-standing or wall-mounted. Keep 1.2 m clear in front (along the arrow) for footwork.'],
     minitramp: ['Mini trampoline', 'Trampoline', 'Jump to the right (along the arrow): 3 m landing zone, put a crash mat there.'],
     silks: ['Rigging point: aerial silks', 'Silks', 'Anchor or beam rated 10 kN or more (≈1 t), swivel, figure-eight. The ceiling must be checked by an engineer.'],
     hoop: ['Rigging point: aerial hoop', 'Hoop', 'Anchor rated 10 kN or more, swivel, adjustable sling.'],
@@ -297,6 +299,7 @@ function translateData() {
     'acro-track': ['Air track on tatami', '6 m track, 1.2 m run-out at each end.'],
     'ay-pair': ['Pad for a trio', 'Base, flyer, spotter; a mat next to it for dismounts.'],
     'ay-group': ['Group: 4 trios', 'Four 2×2 m pads 0.5 m apart.'],
+    'ma-wingchun': ['Wing Chun corner', 'A wooden dummy on 3 × 3 m of tatami with room for footwork.'],
     'room-entry': ['Entrance with changing area', 'A door, a bench with coat rack and shelving along one wall.'],
   };
   for (const m of MODULES) {

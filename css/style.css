@@ -3,7 +3,7 @@
   --bg: #E5EAE7; --surface: #F7F9F8; --surface-2: #EDF1EF; --ink: #15201E; --muted: #5B6966;
   --line: #CAD3CF; --accent: #B35D27; --accent-soft: rgba(179, 93, 39, .13);
   --ok: #2B8452; --warn: #A86E12; --bad: #B8322C;
-  --c-acro: #C8611E; --c-ay: #B23C78; --c-yoga: #2E8B57; --c-str: #7B4FB8; --c-cf: #2B66B8; --c-base: #6F7C78;
+  --c-acro: #C8611E; --c-ay: #B23C78; --c-yoga: #2E8B57; --c-str: #7B4FB8; --c-cf: #2B66B8; --c-ma: #8A5A2B; --c-base: #6F7C78;
   --plan-bg: #FBFCFB; --wall: #33403D; --grid-mi: rgba(21, 32, 30, .05); --grid-ma: rgba(21, 32, 30, .11);
   --fl-tatami: #DDEBD8; --fl-tatami-l: #BCD4B6; --fl-rubber: #CDD2D6; --fl-rubber-d: #9BA3AA; --fl-hard: #F0E6D3; --fl-hard-l: #E0D0B4;
   --display: "Unbounded", "Segoe UI", system-ui, sans-serif;
@@ -15,7 +15,7 @@
     --bg: #0C1211; --surface: #131B1A; --surface-2: #19231F; --ink: #DCE6E3; --muted: #8B9A96;
     --line: #26322F; --accent: #E38B51; --accent-soft: rgba(227, 139, 81, .15);
     --ok: #4CC17F; --warn: #E3B341; --bad: #F06A60;
-    --c-acro: #F08A4B; --c-ay: #E88AB4; --c-yoga: #5CC98A; --c-str: #B18CEA; --c-cf: #6FA3F0; --c-base: #8B9A96;
+    --c-acro: #F08A4B; --c-ay: #E88AB4; --c-yoga: #5CC98A; --c-str: #B18CEA; --c-cf: #6FA3F0; --c-ma: #D09A62; --c-base: #8B9A96;
     --plan-bg: #0F1514; --wall: #6B7A76; --grid-mi: rgba(220, 230, 227, .04); --grid-ma: rgba(220, 230, 227, .09);
     --fl-tatami: #1C2C22; --fl-tatami-l: #2A4232; --fl-rubber: #1F2428; --fl-rubber-d: #394147; --fl-hard: #262117; --fl-hard-l: #352E21;
   }
@@ -24,7 +24,7 @@
   --bg: #0C1211; --surface: #131B1A; --surface-2: #19231F; --ink: #DCE6E3; --muted: #8B9A96;
   --line: #26322F; --accent: #E38B51; --accent-soft: rgba(227, 139, 81, .15);
   --ok: #4CC17F; --warn: #E3B341; --bad: #F06A60;
-  --c-acro: #F08A4B; --c-ay: #E88AB4; --c-yoga: #5CC98A; --c-str: #B18CEA; --c-cf: #6FA3F0; --c-base: #8B9A96;
+  --c-acro: #F08A4B; --c-ay: #E88AB4; --c-yoga: #5CC98A; --c-str: #B18CEA; --c-cf: #6FA3F0; --c-ma: #D09A62; --c-base: #8B9A96;
   --plan-bg: #0F1514; --wall: #6B7A76; --grid-mi: rgba(220, 230, 227, .04); --grid-ma: rgba(220, 230, 227, .09);
   --fl-tatami: #1C2C22; --fl-tatami-l: #2A4232; --fl-rubber: #1F2428; --fl-rubber-d: #394147; --fl-hard: #262117; --fl-hard-l: #352E21;
 }

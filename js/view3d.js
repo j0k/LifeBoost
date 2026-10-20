@@ -466,6 +466,24 @@ function buildEquip(g, it, c, w, d, hg, base, m, metal) {
       for (const z of [-d / 2 + 0.15, d / 2 - 0.15]) box3(g, w - 0.9, 0.05, 0.05, 0, 0.25, z, metal);
       return;
     }
+    case 'mookjong': {
+      // Ствол на двух рейках между стойками рамы; руки и нога смотрят вперёд (+z)
+      const wood = mat('#8a5a2b'), dark = mat('#5e3d1e');
+      box3(g, w, 0.06, d, 0, base, 0, dark);
+      for (const x of [-w / 2 + 0.05, w / 2 - 0.05]) box3(g, 0.08, hg - 0.06, 0.08, x, base + 0.06, 0, dark);
+      for (const y of [0.55, 1.5]) box3(g, w - 0.1, 0.05, 0.08, 0, y, 0, dark);
+      cyl(g, 0.115, 1.45, 'y', 0, 0.3 + 0.725, 0, wood);
+      const arm = (x, y, yaw, len, pitch = 0) => {
+        const o = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, len, 10), wood);
+        o.geometry.translate(0, len / 2, 0);
+        o.rotation.set(Math.PI / 2 - pitch, yaw, 0, 'YXZ');
+        o.position.set(x, y, 0.08);
+        g.add(o);
+      };
+      arm(-0.06, 1.33, -0.35, 0.55); arm(0.06, 1.33, 0.35, 0.55); arm(0, 1.1, 0, 0.5);
+      arm(0, 0.65, 0, 0.55, -0.6);
+      return;
+    }
     case 'canes':
       for (const x of [-0.18, 0.18]) {
         cyl(g, 0.02, hg, 'y', x, base + hg / 2, 0, metal);

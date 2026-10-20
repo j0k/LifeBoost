@@ -131,6 +131,10 @@ function drawItem(g, it, c, isSel, sev) {
     svgEl('rect', { x: -214, y: -107, width: 428, height: 214, rx: 6, class: 'p-sym' }, grp);
     svgEl('path', { d: 'M-30 0H30M0 -30V30', class: 'p-sym' }, grp);
   }
+  if (it.id === 'mookjong') {
+    svgEl('circle', { r: 12, class: 'p-sym strong' }, grp);
+    svgEl('path', { d: `M0 12V${d / 2 + 60}m-12 -18l12 18l12 -18M-8 8L-26 40M8 8L26 40`, class: 'p-sym strong' }, grp);
+  }
   if (it.id === 'minitramp') svgEl('path', { d: `M${-w / 4} 0H${w / 2 + 60}m-18 -12l18 12l-18 12`, class: 'p-sym strong' }, grp);
   if (it.id === 'rack') svgEl('path', { d: `M0 ${-d / 4}V${d / 2 + 70}m-12 -18l12 18l12 -18`, class: 'p-sym strong' }, grp);
   if (it.id === 'rower') svgEl('line', { x1: -w / 2 + 20, y1: 0, x2: w / 2 - 50, y2: 0, class: 'p-sym strong' }, grp);

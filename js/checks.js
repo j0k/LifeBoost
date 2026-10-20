@@ -43,6 +43,7 @@ function zoneHit(Z, O, out) {
     return;
   }
   if (o.kind === 'mat' && z.softOk) return;
+  if (o.soft) return; // мягкая защита стены как раз для зон
   const text = z.kind === 'door' ? tr`${nm(O)} загораживает проход у двери` : tr`${nm(O)} в зоне безопасности ${nm(Z)}`;
   out.push({ sev: 'bad', text, ids: [O.uid, Z.uid], hot: r });
 }
@@ -66,7 +67,8 @@ function itemIssues(it, out) {
   if (hasZone(it) && c.kind !== 'floor') {
     const z = zone(it), wm = wmargins(it);
     const over = [-z.y, z.x + z.w - L, z.y + z.h - W, -z.x];
-    if (over.some((v, i) => v > 1 && wm[i] >= 50))
+    // Стена, обшитая настенным матом на этом участке, — нормальное решение
+    if (over.some((v, i) => v > 1 && wm[i] >= 50 && !padded(i, z)))
       out.push({ sev: 'warn', text: tr`${nm(it)}: зона безопасности упирается в стену`, ids: [it.uid], hot: outsidePart(z, room) });
   }
   if (c.needFloor && floorCover(b, c.needFloor) < 0.9)
@@ -76,6 +78,19 @@ function itemIssues(it, out) {
     const ok = state.items.some((m) => CAT[m.id].landing && hasPoint(body(m), cx, cy));
     if (!ok) out.push({ sev: 'bad', text: tr`${nm(it)}: под точкой нет страховочного мата`, ids: [it.uid], still: true });
   }
+}
+// Закрыт ли настенными матами участок стены side, на который выходит зона z (хотя бы на 80%)
+function padded(side, z) {
+  const { L, W } = state.room, horiz = side % 2 === 0;
+  const a = Math.max(0, horiz ? z.x : z.y), b = Math.min(horiz ? L : W, horiz ? z.x + z.w : z.y + z.h);
+  if (b <= a) return true;
+  let s = 0;
+  for (const p of state.items) {
+    if (!CAT[p.id].soft || p.rot / 90 !== side || !touchesWall(p)) continue;
+    const r = body(p), pa = horiz ? r.x : r.y, pb = horiz ? r.x + r.w : r.y + r.h;
+    s += Math.max(0, Math.min(b, pb) - Math.max(a, pa));
+  }
+  return s >= 0.8 * (b - a);
 }
 // Кусок зоны за стеной — для подсветки
 function outsidePart(z, room) {
