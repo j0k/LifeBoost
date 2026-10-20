@@ -379,14 +379,28 @@ function buildItem(g, it, c, H) {
 function buildWall(g, it, c, w, d, e0, eh, m, metal, back) {
   switch (it.id) {
     case 'mirror': {
-      box3(g, w, eh, 0.02, 0, e0, back + 0.01, mat('#BFD8E2', { shiny: true }));
-      if (v3.refl && THREE.Reflector) {
-        // Настоящее отражение: плоскость смотрит в зал (+z в осях предмета)
-        const tw = Math.round(clamp(w * 300, 256, 2048)), th = Math.round(clamp(eh * 300, 256, 1024));
-        const r = new THREE.Reflector(new THREE.PlaneGeometry(w - 0.02, eh - 0.02), { textureWidth: tw, textureHeight: th, color: 0xb9c4c6, clipBias: 0.003 });
-        r.position.set(0, e0 + eh / 2, back + 0.022);
-        g.add(r);
-      }
+      if (!(v3.refl && THREE.Reflector)) { box3(g, w, eh, 0.02, 0, e0, back + 0.01, mat('#BFD8E2', { shiny: true })); return; }
+      // Настоящее отражение: плоскость смотрит в зал (+z в осях предмета), вокруг тонкая рамка
+      const fr = mat('#9aa6a8'), t = 0.025;
+      box3(g, w, t, 0.03, 0, e0, back + 0.015, fr);
+      box3(g, w, t, 0.03, 0, e0 + eh - t, back + 0.015, fr);
+      for (const x of [-w / 2 + t / 2, w / 2 - t / 2]) box3(g, t, eh, 0.03, x, e0, back + 0.015, fr);
+      const tw = Math.round(clamp(w * 320, 256, 2048)), th = Math.round(clamp(eh * 320, 256, 1024));
+      const r = new THREE.Reflector(new THREE.PlaneGeometry(w - 2 * t, eh - 2 * t), { textureWidth: tw, textureHeight: th, color: 0xdfe6e8, clipBias: 0.003 });
+      r.position.set(0, e0 + eh / 2, back + 0.012);
+      // Наклонная плоскость отсечения ломает дальнюю: на время отражения дальность 200 м,
+      // и в отражении видны все стены зала, даже спрятанные от основной камеры
+      const draw = r.onBeforeRender;
+      r.onBeforeRender = function (renderer, scene, camera) {
+        const far = camera.far, hidden = v3.walls.filter((m) => !m.visible);
+        const flats = v3.root.children.filter((o) => o.userData.side != null && !o.visible && o !== g);
+        camera.far = Math.min(far, 200); camera.updateProjectionMatrix();
+        for (const o of hidden.concat(flats)) o.visible = true;
+        draw.call(this, renderer, scene, camera);
+        for (const o of hidden.concat(flats)) o.visible = false;
+        camera.far = far; camera.updateProjectionMatrix();
+      };
+      g.add(r);
       return;
     }
     case 'window': box3(g, w, eh, 0.03, 0, e0, back + 0.015, mat('#9CCBF2', { op: 0.5, shiny: true })); return;
