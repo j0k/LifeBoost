@@ -10,11 +10,12 @@ function qtyOf(id, w, d) {
 // Цена позиции в выбранной валюте: [эконом, проф]
 function priceOf(c) {
   const { mkt, cur, rub, eur } = state.money;
-  const usd = (v) => (mkt === 'us' ? v : v / rub);
-  const to = (v) => (cur === 'USD' ? usd(v) : cur === 'EUR' ? usd(v) / eur : mkt === 'ru' ? v : v * rub);
+  // Через рубли: ценник → ₽ → валюта показа
+  const toRub = (v) => (mkt === 'us' ? v * rub : v);
+  const to = (v) => (cur === 'RUB' ? toRub(v) : cur === 'USD' ? (mkt === 'us' ? v : v / rub) : toRub(v) / eur);
   return (mkt === 'us' ? c.usd : c.price).map(to);
 }
-const needRub = () => (state.money.mkt === 'ru') !== (state.money.cur === 'RUB');
+const needRub = () => (state.money.mkt === 'us') !== (state.money.cur === 'USD');
 const needEur = () => state.money.cur === 'EUR';
 const unitName = (c) => (c.unit === 'm2' ? tr`м²` : c.unit === 'm' ? tr`м` : tr`шт`);
 function moduleCost(mod) {

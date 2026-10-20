@@ -10,8 +10,8 @@ const state = {
   owned: new Set(), // позиции, которые уже куплены: в закупку не идут
   sel: null,
   view: { zones: true, dims: true, labels: true, marks: false },
-  // Цены: mkt — чей ценник (ru — рубли, us — доллары), cur — в чём показывать; rub — ₽ за 1 $, eur — $ за 1 €
-  money: { mkt: EN ? 'us' : 'ru', cur: EN ? 'USD' : 'RUB', rub: 90, eur: 1.1 },
+  // Цены: mkt — чей ценник (ru — рубли, us — доллары), cur — в чём показывать; rub — ₽ за 1 $, eur — ₽ за 1 €
+  money: { mkt: EN ? 'us' : 'ru', cur: EN ? 'USD' : 'RUB', rub: 82.8, eur: 93.06 },
 };
 let uidSeq = 1, grpSeq = 1;
 
@@ -215,8 +215,10 @@ function load(o) {
     const [mkt, cur, rub, eur] = o.c;
     if (mkt === 'ru' || mkt === 'us') state.money.mkt = mkt;
     if (['RUB', 'USD', 'EUR'].includes(cur)) state.money.cur = cur;
-    if (rub > 0 && rub < 1e4) state.money.rub = +rub;
-    if (eur > 0 && eur < 100) state.money.eur = +eur;
+    // 90 и 1,1 — заглушки первой версии, где евро было в долларах: такие курсы заменяем текущими
+    const stub = rub === 90 && eur === 1.1;
+    if (!stub && rub > 0 && rub < 1e4) state.money.rub = +rub;
+    if (!stub && eur > 0 && eur < 1e4) state.money.eur = eur < 10 ? +(eur * state.money.rub).toFixed(2) : +eur;
   }
   state.sel = null;
 }
