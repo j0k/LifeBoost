@@ -4,12 +4,16 @@ const THREE_SRC = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
 ];
+// Зеркало-отражатель из примеров three.js (обычный скрипт, вешает THREE.Reflector)
+const REFLECTOR_SRC = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/objects/Reflector.js';
 const HINT3D = tr`тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать · из каталога можно перетащить`;
 const HINT3D_EDIT = tr`тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать`;
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
   on: false, loading: null, renderer: null, scene: null, cam: null, root: null, walls: [], pick: [],
   env: (() => { try { const e = localStorage.getItem('lifeboost.env'); return e in ENVS ? e : 'none'; } catch (e) { return 'none'; } })(), envGroup: null,
+  // Отражения в зеркалах: по умолчанию включены, на сенсорных экранах выключены (каждое зеркало рисует сцену заново)
+  refl: (() => { try { const v = localStorage.getItem('lifeboost.refl'); if (v != null) return v === '1'; } catch (e) { /* нет */ } return !matchMedia('(pointer: coarse)').matches; })(),
   mats: new Map(), pendingCam: null, edit: false, personAt: null, person: null, drag: null, orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
 };
 
@@ -23,7 +27,15 @@ function loadThree() {
     s.onerror = () => { s.remove(); i + 1 < THREE_SRC.length ? tryLoad(i + 1).then(res, rej) : rej(new Error(tr`нет связи с CDN`)); };
     document.head.appendChild(s);
   });
-  return (v3.loading = tryLoad(0).catch((e) => { v3.loading = null; throw e; }));
+  // Без отражателя всё работает, просто зеркала будут матовыми
+  const refl = () => new Promise((res) => {
+    const s = document.createElement('script');
+    s.src = REFLECTOR_SRC;
+    s.onload = res;
+    s.onerror = () => { s.remove(); res(); };
+    document.head.appendChild(s);
+  });
+  return (v3.loading = tryLoad(0).then(refl).catch((e) => { v3.loading = null; throw e; }));
 }
 
 function setView3d(on) {
@@ -57,12 +69,19 @@ function init3d() {
   envSel.innerHTML = Object.entries(ENVS).map(([k, e]) => `<option value="${k}">${e.name}</option>`).join('');
   envSel.value = v3.env;
   envSel.onchange = () => setEnv(envSel.value, true);
+  box.querySelector('[data-cam="refl"]').setAttribute('aria-pressed', String(v3.refl));
   box.querySelector('.v3-tools').onclick = (e) => {
     const b = e.target.closest('[data-cam]');
     if (!b) return;
     const o = v3.orbit, k = b.dataset.cam;
     if (k === 'png') return snapshot3d();
     if (k === 'share') return share();
+    if (k === 'refl') {
+      v3.refl = !v3.refl;
+      b.setAttribute('aria-pressed', String(v3.refl));
+      try { localStorage.setItem('lifeboost.refl', v3.refl ? '1' : '0'); } catch (e) { /* без сохранения */ }
+      return build3d();
+    }
     if (k === 'edit') { v3.edit = !v3.edit; b.setAttribute('aria-pressed', String(v3.edit)); $('#hint3d').textContent = v3.edit ? HINT3D_EDIT : HINT3D; return; }
     if (k === 'top') { o.th = 0; o.ph = 0.02; }
     if (k === 'front') { o.th = 0; o.ph = 1.35; }
@@ -161,7 +180,7 @@ function build3d() {
   } else if (sig !== v3.sig || !v3.orbit.t) { v3.sig = sig; resetTarget(); }
   if (v3.root) {
     v3.scene.remove(v3.root);
-    v3.root.traverse((o) => { o.geometry?.dispose(); o.material?.map?.dispose(); if (o.isSprite) o.material.dispose(); });
+    v3.root.traverse((o) => { if (o.isReflector) o.dispose(); o.geometry?.dispose(); o.material?.map?.dispose(); if (o.isSprite) o.material.dispose(); });
   }
   for (const m of v3.mats.values()) m.dispose();
   v3.mats.clear();
@@ -359,7 +378,17 @@ function buildItem(g, it, c, H) {
 
 function buildWall(g, it, c, w, d, e0, eh, m, metal, back) {
   switch (it.id) {
-    case 'mirror': box3(g, w, eh, 0.02, 0, e0, back + 0.01, mat('#BFD8E2', { shiny: true })); return;
+    case 'mirror': {
+      box3(g, w, eh, 0.02, 0, e0, back + 0.01, mat('#BFD8E2', { shiny: true }));
+      if (v3.refl && THREE.Reflector) {
+        // Настоящее отражение: плоскость смотрит в зал (+z в осях предмета)
+        const tw = Math.round(clamp(w * 300, 256, 2048)), th = Math.round(clamp(eh * 300, 256, 1024));
+        const r = new THREE.Reflector(new THREE.PlaneGeometry(w - 0.02, eh - 0.02), { textureWidth: tw, textureHeight: th, color: 0xb9c4c6, clipBias: 0.003 });
+        r.position.set(0, e0 + eh / 2, back + 0.022);
+        g.add(r);
+      }
+      return;
+    }
     case 'window': box3(g, w, eh, 0.03, 0, e0, back + 0.015, mat('#9CCBF2', { op: 0.5, shiny: true })); return;
     case 'wallbars': {
       const z = back + 0.08, n = Math.round(eh / 0.22);

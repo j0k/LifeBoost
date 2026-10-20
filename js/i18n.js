@@ -161,6 +161,7 @@ const I18N_EN = {
   'План': 'Plan', 'Вид': 'View', 'План зала': 'Room plan',
   'сетка 0,5 м · штриховка — зоны безопасности · красное — нарушения': 'grid 0.5 m · hatching — safety zones · red — issues',
   'Двигать': 'Move', 'Двигать предметы и человека мышью': 'Move items and the person with the mouse',
+  'Отражения': 'Reflections', 'Настоящие отражения в зеркалах (на слабых устройствах может тормозить)': 'Real reflections in mirrors (may be slow on weak devices)',
   'Обзор': 'Overview', 'Изнутри': 'Inside', 'Встать в зале и оглядеться': 'Stand in the room and look around',
   'Окружение': 'Surroundings', 'Где стоит зал': 'Where the gym is',
   'Без окружения': 'No surroundings', 'Квартира, 5 этаж': 'Apartment, 5th floor', 'Небоскрёб, 50 этаж': 'Skyscraper, 50th floor', 'Загород у реки': 'Countryside by a river', 'Сверху': 'Top', 'С пола': 'Eye level',
