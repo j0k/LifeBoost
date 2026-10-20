@@ -11,6 +11,7 @@ function render() {
   renderChecks();
   renderStats();
   renderBom();
+  build3d();
   renderRoomFields();
   $('#btnUndo').disabled = !hist.past.length;
   $('#btnRedo').disabled = !hist.future.length;
@@ -97,8 +98,9 @@ $('#projName').onchange = (e) => { beginChange(); state.name = e.target.value.tr
 for (const k of Object.keys(state.view)) {
   const b = $(`[data-view="${k}"]`);
   b.setAttribute('aria-pressed', String(state.view[k]));
-  b.onclick = () => { state.view[k] = !state.view[k]; b.setAttribute('aria-pressed', String(state.view[k])); renderPlan(); };
+  b.onclick = () => { state.view[k] = !state.view[k]; b.setAttribute('aria-pressed', String(state.view[k])); renderPlan(); build3d(); };
 }
+$$('[data-mode]').forEach((b) => { b.onclick = () => setView3d(b.dataset.mode === '3d'); });
 $('#btnUndo').onclick = undo;
 $('#btnRedo').onclick = redo;
 $('#btnShare').onclick = share;

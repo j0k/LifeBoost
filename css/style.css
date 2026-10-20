@@ -102,6 +102,19 @@ select.btn { padding-right: 8px; max-width: 260px; }
 .plan-wrap { background: var(--plan-bg); border-radius: 8px; border: 1px solid var(--line); overflow: hidden; }
 #plan { display: block; width: 100%; height: auto; max-height: calc(100vh - 120px); touch-action: none; user-select: none; font-family: var(--body); }
 #plan:focus-visible { outline-offset: -2px; }
+.plan-wrap { position: relative; }
+.plan-wrap.is3d #plan { display: none; }
+.seg { display: inline-flex; gap: 2px; margin-left: 10px; vertical-align: middle; }
+.seg .tgl { padding: 2px 10px; }
+#view3d { position: relative; height: min(calc(100vh - 140px), 68vw); min-height: 320px; touch-action: none; user-select: none; }
+#view3d canvas { display: block; cursor: grab; }
+#view3d canvas:active { cursor: grabbing; }
+.v3-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; flex-wrap: wrap; justify-content: end; }
+.v3-tools .btn { background: color-mix(in srgb, var(--surface) 85%, transparent); }
+.v3-tip { position: absolute; pointer-events: none; font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--ink); color: var(--surface); white-space: nowrap; }
+.foot { text-align: center; font-size: 12px; padding-top: 8px; }
+.foot a { color: var(--muted); text-decoration: none; letter-spacing: .02em; opacity: .75; }
+.foot a:hover { color: var(--accent); opacity: 1; }
 .p-wall { fill: var(--wall); }
 .p-floor { fill: var(--plan-bg); }
 .p-grid line { stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -258,6 +271,8 @@ select.btn { padding-right: 8px; max-width: 260px; }
 
 /* Печать: листы чертежей без интерфейса */
 @media print {
+  #view3d, .seg, .foot { display: none !important; }
+  .plan-wrap.is3d #plan { display: block; }
   @page { size: A4 landscape; margin: 10mm; }
   body { background: #fff; color: #000; font-size: 11px; }
   .wrap { max-width: none; padding: 0; gap: 8mm; }

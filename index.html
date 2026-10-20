@@ -65,8 +65,17 @@
     </aside>
 
     <section class="panel planpanel">
-      <div class="panel-head"><h2>План</h2><span class="hint">сетка 0,5 м · штриховка — зоны безопасности · красное — нарушения</span></div>
-      <div class="plan-wrap"><svg id="plan" tabindex="0" role="img" aria-label="План зала"></svg></div>
+      <div class="panel-head">
+        <div class="row"><h2>План</h2>
+          <div class="seg" role="group" aria-label="Вид"><button type="button" class="tgl" data-mode="2d" aria-pressed="true">План</button><button type="button" class="tgl" data-mode="3d" aria-pressed="false">3D</button></div></div>
+        <span class="hint" id="planHint">сетка 0,5 м · штриховка — зоны безопасности · красное — нарушения</span>
+        <span class="hint" id="hint3d" hidden>тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать</span>
+      </div>
+      <div class="plan-wrap"><svg id="plan" tabindex="0" role="img" aria-label="План зала"></svg>
+        <div id="view3d" hidden>
+          <div class="v3-tools"><button type="button" class="btn sm" data-cam="home">Обзор</button><button type="button" class="btn sm" data-cam="top">Сверху</button><button type="button" class="btn sm" data-cam="front">С пола</button><button type="button" class="btn sm" data-cam="png">PNG</button></div>
+          <div class="v3-tip" id="tip3d" hidden></div>
+        </div></div>
     </section>
 
     <aside class="panel insp" id="insp" aria-live="polite"></aside>
@@ -100,6 +109,8 @@
     <div id="bom"></div>
     <p class="hint">Цены ориентировочные, Россия, 2026 год: «эконом» — «проф». Без доставки и монтажа. Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.</p>
   </section>
+
+  <footer class="foot"><a href="https://juri-konoplev.pro/">juri-konoplev.pro</a></footer>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -111,6 +122,7 @@
 <script src="js/checks.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/drawings.js"></script>
+<script src="js/view3d.js"></script>
 <script src="js/panels.js"></script>
 <script src="js/main.js"></script>
 </body>
