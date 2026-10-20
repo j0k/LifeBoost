@@ -257,6 +257,61 @@ function build3d() {
   v3.sun.target.position.set(l / 2, 0, w / 2);
   draw3d();
 }
+// Зеркало. Стандартный THREE.Reflector отсекает зазеркалье наклонной ближней плоскостью камеры,
+// а она искажает дальнюю: издалека и сверху в отражении пропадали пол и всё ниже какой-то высоты.
+// Здесь камера отражения обычная, а зазеркалье срезается плоскостью отсечения рендера.
+function mirrorMesh(w, h, tw, th) {
+  const sh = THREE.Reflector.ReflectorShader, rt = new THREE.WebGLRenderTarget(tw, th, { samples: 4 });
+  const material = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.clone(sh.uniforms), vertexShader: sh.vertexShader, fragmentShader: sh.fragmentShader });
+  material.uniforms.tDiffuse.value = rt.texture;
+  material.uniforms.color.value = new THREE.Color(0xdfe6e8);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), material);
+  mesh.isReflector = true;
+  mesh.dispose = () => { rt.dispose(); material.dispose(); };
+  const vc = new THREE.PerspectiveCamera(), plane = new THREE.Plane(), n = new THREE.Vector3(), mp = new THREE.Vector3(), cp = new THREE.Vector3();
+  const rot = new THREE.Matrix4(), look = new THREE.Vector3(), view = new THREE.Vector3(), target = new THREE.Vector3();
+  const tm = material.uniforms.textureMatrix.value = new THREE.Matrix4();
+  // Отражение рисуется до основного кадра (см. draw3d): вложенный рендер посреди кадра сбивал бы ему отсечение
+  mesh.userData.update = (renderer, scene, camera) => {
+    mp.setFromMatrixPosition(mesh.matrixWorld);
+    cp.setFromMatrixPosition(camera.matrixWorld);
+    rot.extractRotation(mesh.matrixWorld);
+    n.set(0, 0, 1).applyMatrix4(rot);
+    view.subVectors(mp, cp);
+    if (view.dot(n) > 0) return; // смотрим на зеркало сзади
+    view.reflect(n).negate().add(mp);
+    rot.extractRotation(camera.matrixWorld);
+    look.set(0, 0, -1).applyMatrix4(rot).add(cp);
+    target.subVectors(mp, look).reflect(n).negate().add(mp);
+    vc.position.copy(view);
+    vc.up.set(0, 1, 0).applyMatrix4(rot).reflect(n);
+    vc.lookAt(target);
+    vc.far = camera.far;
+    vc.updateMatrixWorld();
+    vc.projectionMatrix.copy(camera.projectionMatrix);
+    tm.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
+    tm.multiply(vc.projectionMatrix).multiply(vc.matrixWorldInverse).multiply(mesh.matrixWorld);
+    plane.setFromNormalAndCoplanarPoint(n, mp);
+    plane.constant += 0.003;
+    // В отражении зал целиком: стены и то, что на них, видны, даже если основная камера их прячет
+    const shown = v3.walls.filter((m) => !m.visible).concat(v3.root.children.filter((o) => o.userData.side != null && !o.visible));
+    for (const o of shown) o.visible = true;
+    mesh.visible = false;
+    const cur = renderer.getRenderTarget(), clip = renderer.clippingPlanes, sh2 = renderer.shadowMap.autoUpdate;
+    renderer.shadowMap.autoUpdate = false;
+    renderer.clippingPlanes = [plane];
+    renderer.setRenderTarget(rt);
+    renderer.state.buffers.depth.setMask(true);
+    if (renderer.autoClear === false) renderer.clear();
+    renderer.render(scene, vc);
+    renderer.setRenderTarget(cur);
+    renderer.clippingPlanes = clip;
+    renderer.shadowMap.autoUpdate = sh2;
+    mesh.visible = true;
+    for (const o of shown) o.visible = false;
+  };
+  return mesh;
+}
 // Стена: сплошная или панорамное остекление (подоконник, стекло с импостами, перемычка)
 function wall3d(root, len, h, x, z, rot, glass) {
   const g = new THREE.Group(), T = WALL_T / 100, wm = mat(cssVar('--line'));
@@ -386,20 +441,8 @@ function buildWall(g, it, c, w, d, e0, eh, m, metal, back) {
       box3(g, w, t, 0.03, 0, e0 + eh - t, back + 0.015, fr);
       for (const x of [-w / 2 + t / 2, w / 2 - t / 2]) box3(g, t, eh, 0.03, x, e0, back + 0.015, fr);
       const tw = Math.round(clamp(w * 320, 256, 2048)), th = Math.round(clamp(eh * 320, 256, 1024));
-      const r = new THREE.Reflector(new THREE.PlaneGeometry(w - 2 * t, eh - 2 * t), { textureWidth: tw, textureHeight: th, color: 0xdfe6e8, clipBias: 0.003 });
+      const r = mirrorMesh(w - 2 * t, eh - 2 * t, tw, th);
       r.position.set(0, e0 + eh / 2, back + 0.012);
-      // Наклонная плоскость отсечения ломает дальнюю: на время отражения дальность 200 м,
-      // и в отражении видны все стены зала, даже спрятанные от основной камеры
-      const draw = r.onBeforeRender;
-      r.onBeforeRender = function (renderer, scene, camera) {
-        const far = camera.far, hidden = v3.walls.filter((m) => !m.visible);
-        const flats = v3.root.children.filter((o) => o.userData.side != null && !o.visible && o !== g);
-        camera.far = Math.min(far, 200); camera.updateProjectionMatrix();
-        for (const o of hidden.concat(flats)) o.visible = true;
-        draw.call(this, renderer, scene, camera);
-        for (const o of hidden.concat(flats)) o.visible = false;
-        camera.far = far; camera.updateProjectionMatrix();
-      };
       g.add(r);
       return;
     }
@@ -545,8 +588,18 @@ function draw3d() {
       if (g.userData.side != null) g.visible = v3.walls[g.userData.side].visible;
       if (g.userData.letter) g.visible = o.r >= 1.2;
     }
+    renderMirrors();
     v3.renderer.render(v3.scene, v3.cam);
   });
+}
+// Видимые зеркала обновляют своё отражение перед кадром
+function renderMirrors() {
+  const list = [];
+  v3.root.traverseVisible((o) => { if (o.isReflector && o.userData.update) list.push(o); });
+  if (!list.length) return;
+  v3.scene.updateMatrixWorld();
+  v3.cam.updateMatrixWorld();
+  for (const m of list) m.userData.update(v3.renderer, v3.scene, v3.cam);
 }
 function bindOrbit(cv) {
   const ptrs = new Map();
@@ -700,6 +753,7 @@ function pickHit(e) {
   return hits.find((h) => h.object.userData.person || CAT[byUid(h.object.userData.uid)?.id]?.kind !== 'floor') || hits[0];
 }
 function snapshot3d() {
+  renderMirrors();
   v3.renderer.render(v3.scene, v3.cam);
   v3.renderer.domElement.toBlob((b) => {
     const a = document.createElement('a');
