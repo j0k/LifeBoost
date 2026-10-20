@@ -21,15 +21,17 @@ function svgText(parent, x, y, text, attrs = {}) {
 const fmtNum = (v, d = 2) => v.toLocaleString(LOC, { maximumFractionDigits: d });
 const fmtM = (cm) => fmtNum(cm / 100);                 // 185 → «1,85»
 const fmtM2 = (cm2) => fmtNum(cm2 / 1e4, 1);           // 40000 → «4»
-// Деньги в валюте state.money.cur: 1 500 ₽, $1,500, €1,500 (по-русски 1 500 €)
+// Деньги в валюте state.money.cur: 1 500 ₽, $1,500, €1,500, CHF 1,500 (по-русски 1 500 € и 1 500 CHF)
+const moneyFirst = () => state.money.cur === 'USD' || (EN && state.money.cur !== 'RUB');
 function fmtMoney(v) {
   const n = Math.round(v).toLocaleString(LOC), c = state.money.cur;
-  return c === 'USD' ? '$' + n : c === 'EUR' ? (EN ? '€' + n : n + ' €') : n + ' ₽';
+  const sym = { RUB: '₽', USD: '$', EUR: '€', CHF: 'CHF' }[c];
+  return moneyFirst() ? (c === 'CHF' ? 'CHF ' : sym) + n : n + ' ' + sym;
 }
 function fmtRange([a, b]) {
   if (Math.round(a) === Math.round(b)) return fmtMoney(a);
-  const c = state.money.cur, n = (v) => Math.round(v).toLocaleString(LOC);
-  return c === 'USD' || (c === 'EUR' && EN) ? `${fmtMoney(a)}–${n(b)}` : `${n(a)}–${fmtMoney(b)}`;
+  const n = (v) => Math.round(v).toLocaleString(LOC);
+  return moneyFirst() ? `${fmtMoney(a)}–${n(b)}` : `${n(a)}–${fmtMoney(b)}`;
 }
 function plural(n, [one, few, many]) {
   if (EN) { const e = PLURAL_EN[one] || [one, one]; return n === 1 ? e[0] : e[1]; }

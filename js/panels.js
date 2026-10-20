@@ -9,13 +9,14 @@ function qtyOf(id, w, d) {
 }
 // Цена позиции в выбранной валюте: [эконом, проф]
 function priceOf(c) {
-  const { mkt, cur, rub, eur } = state.money;
-  // Через рубли: ценник → ₽ → валюта показа
-  const toRub = (v) => (mkt === 'us' ? v * rub : v);
-  const to = (v) => (cur === 'RUB' ? toRub(v) : cur === 'USD' ? (mkt === 'us' ? v : v / rub) : toRub(v) / eur);
+  const { mkt, cur, rub, eur, chf } = state.money;
+  // Евро — через рубли, франк — через доллары (так заданы курсы)
+  const toRub = (v) => (mkt === 'us' ? v * rub : v), toUsd = (v) => (mkt === 'us' ? v : v / rub);
+  const to = (v) => (cur === 'RUB' ? toRub(v) : cur === 'USD' ? toUsd(v) : cur === 'EUR' ? toRub(v) / eur : toUsd(v) / chf);
   return (mkt === 'us' ? c.usd : c.price).map(to);
 }
-const needRub = () => (state.money.mkt === 'us') !== (state.money.cur === 'USD');
+const needRub = () => (state.money.cur === 'CHF' ? state.money.mkt === 'ru' : (state.money.mkt === 'us') !== (state.money.cur === 'USD'));
+const needChf = () => state.money.cur === 'CHF';
 const needEur = () => state.money.cur === 'EUR';
 const unitName = (c) => (c.unit === 'm2' ? tr`м²` : c.unit === 'm' ? tr`м` : tr`шт`);
 function moduleCost(mod) {
@@ -235,7 +236,7 @@ function renderBom() {
   $('#priceNote').textContent = (m.mkt === 'us'
     ? tr`Цены ориентировочные, рынок США, 2026 год: «эконом» — «проф». Без доставки, монтажа и налога с продаж.`
     : tr`Цены ориентировочные, Россия, 2026 год: «эконом» — «проф». Без доставки и монтажа.`)
-    + (needRub() || needEur() ? ' ' + tr`Пересчитано по курсу, который задан выше.` : '')
+    + (needRub() || needEur() || needChf() ? ' ' + tr`Пересчитано по курсу, который задан выше.` : '')
     + ' ' + tr`Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.`;
   renderMoney();
 }
@@ -243,15 +244,16 @@ function renderMoney() {
   const m = state.money;
   $('#mkt').value = m.mkt;
   $('#cur').value = m.cur;
-  for (const [id, v] of [['rub', m.rub], ['eur', m.eur]]) if (document.activeElement !== $('#' + id)) $('#' + id).value = String(v);
+  for (const [id, v] of [['rub', m.rub], ['eur', m.eur], ['chf', m.chf]]) if (document.activeElement !== $('#' + id)) $('#' + id).value = String(v);
   $('#rateRub').hidden = !needRub();
   $('#rateEur').hidden = !needEur();
+  $('#rateChf').hidden = !needChf();
 }
 function onMoney(e) {
   const id = e.target.id, m = state.money;
-  if (!['mkt', 'cur', 'rub', 'eur'].includes(id)) return;
+  if (!['mkt', 'cur', 'rub', 'eur', 'chf'].includes(id)) return;
   let v = e.target.value;
-  if (id === 'rub' || id === 'eur') {
+  if (id === 'rub' || id === 'eur' || id === 'chf') {
     v = parseFloat(String(v).replace(',', '.'));
     if (!(v > 0)) return renderMoney();
   }

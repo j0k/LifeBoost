@@ -133,7 +133,7 @@ const I18N_EN = {
   'Отметьте «есть» то, что уже куплено, — оно уйдёт из суммы к покупке.': 'Tick “owned” for what you already have — it drops out of the amount to buy.',
   'Цены': 'Prices', 'Россия, ₽': 'Russia, ₽', 'США, $': 'USA, $',
   'Показывать в': 'Show in', '₽ рублях': '₽ rubles', '$ долларах': '$ dollars', '€ евро': '€ euros',
-  'Курс доллара': 'Dollar rate', 'Курс евро': 'Euro rate',
+  'Курс доллара': 'Dollar rate', 'Курс евро': 'Euro rate', 'Курс франка': 'Franc rate', 'CHF франках': 'CHF francs',
 
   // ---------- 3D ----------
   'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать': 'drag — rotate · right button or Shift — pan · wheel — zoom · click — select',

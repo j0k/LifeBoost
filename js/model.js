@@ -10,8 +10,8 @@ const state = {
   owned: new Set(), // позиции, которые уже куплены: в закупку не идут
   sel: null,
   view: { zones: true, dims: true, labels: true, marks: false },
-  // Цены: mkt — чей ценник (ru — рубли, us — доллары), cur — в чём показывать; rub — ₽ за 1 $, eur — ₽ за 1 €
-  money: { mkt: EN ? 'us' : 'ru', cur: EN ? 'USD' : 'RUB', rub: 82.8, eur: 93.06 },
+  // Цены: mkt — чей ценник (ru — рубли, us — доллары), cur — в чём показывать; rub — ₽ за 1 $, eur — ₽ за 1 €, chf — $ за 1 CHF
+  money: { mkt: EN ? 'us' : 'ru', cur: EN ? 'USD' : 'RUB', rub: 82.8, eur: 93.06, chf: 1.21 },
 };
 let uidSeq = 1, grpSeq = 1;
 
@@ -192,7 +192,7 @@ function serialize() {
     v: 1, n: state.name, r: [L, W, H],
     i: state.items.map((it) => [it.id, it.x, it.y, it.rot, it.w, it.d, it.g, it.m || '']),
     k: state.kits, o: [...state.owned],
-    c: [state.money.mkt, state.money.cur, state.money.rub, state.money.eur],
+    c: [state.money.mkt, state.money.cur, state.money.rub, state.money.eur, state.money.chf],
   };
 }
 function load(o) {
@@ -212,13 +212,14 @@ function load(o) {
   state.owned = new Set((o.o || []).filter((k) => CAT[k]));
   // Валюта — если в проекте её нет, остаётся та, что у зрителя
   if (Array.isArray(o.c)) {
-    const [mkt, cur, rub, eur] = o.c;
+    const [mkt, cur, rub, eur, chf] = o.c;
     if (mkt === 'ru' || mkt === 'us') state.money.mkt = mkt;
-    if (['RUB', 'USD', 'EUR'].includes(cur)) state.money.cur = cur;
+    if (['RUB', 'USD', 'EUR', 'CHF'].includes(cur)) state.money.cur = cur;
     // 90 и 1,1 — заглушки первой версии, где евро было в долларах: такие курсы заменяем текущими
     const stub = rub === 90 && eur === 1.1;
     if (!stub && rub > 0 && rub < 1e4) state.money.rub = +rub;
     if (!stub && eur > 0 && eur < 1e4) state.money.eur = eur < 10 ? +(eur * state.money.rub).toFixed(2) : +eur;
+    if (chf > 0 && chf < 100) state.money.chf = +chf;
   }
   state.sel = null;
 }
