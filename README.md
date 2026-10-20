@@ -6,5 +6,7 @@
 
 Открыть: https://juri-konoplev.pro/LifeBoost/
 
+English: https://juri-konoplev.pro/LifeBoost/?lang=en
+
 Статическая страница без сборки: `index.html`, `css/`, `js/` (обычные скрипты, работает и с диска).
 Каталог и цены — `js/catalog.js`, модули и шаблоны залов — `js/modules.js`, правила проверок — `js/checks.js`.

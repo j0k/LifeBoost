@@ -1,33 +1,33 @@
 // Проверки плана: наложения, зоны безопасности, стены, потолок, покрытие, двери, плотность людей.
 // Все правила — чистые функции от state, без DOM: их можно гонять и в node.
 const SEV_RANK = { bad: 3, warn: 2, info: 1 };
-const nm = (it) => `«${CAT[it.id].short || CAT[it.id].name}»`;
+const nm = (it) => (EN ? `“${CAT[it.id].short || CAT[it.id].name}”` : `«${CAT[it.id].short || CAT[it.id].name}»`);
 
 // Нарушения между двумя предметами; пишет в out: { sev, text, ids, hot }
 function pairIssues(A, B, out) {
   const a = CAT[A.id], b = CAT[B.id];
   if (a.kind === 'floor' && b.kind === 'floor') {
     const r = inter(body(A), body(B));
-    if (r) out.push({ sev: 'warn', text: `Покрытия ${nm(A)} и ${nm(B)} наложены: площадь посчитана дважды`, ids: [A.uid, B.uid], hot: r });
+    if (r) out.push({ sev: 'warn', text: tr`Покрытия ${nm(A)} и ${nm(B)} наложены: площадь посчитана дважды`, ids: [A.uid, B.uid], hot: r });
     return;
   }
   if (a.kind === 'floor' || b.kind === 'floor') return;
   if (a.kind === 'ceil' && b.kind === 'ceil') {
     const r = inter(zone(A), zone(B));
-    if (r) out.push({ sev: 'bad', text: `Зоны раскачки ${nm(A)} и ${nm(B)} пересекаются`, ids: [A.uid, B.uid], hot: r });
+    if (r) out.push({ sev: 'bad', text: tr`Зоны раскачки ${nm(A)} и ${nm(B)} пересекаются`, ids: [A.uid, B.uid], hot: r });
     return;
   }
   if (a.kind === 'ceil' || b.kind === 'ceil') {
     const [C, O] = a.kind === 'ceil' ? [A, B] : [B, A];
     if (CAT[O.id].kind === 'mat') return;
     const r = inter(zone(C), body(O));
-    if (r) out.push({ sev: 'bad', text: `${nm(O)} под ${nm(C)}: в зоне раскачки ничего твёрдого`, ids: [O.uid, C.uid], hot: r });
+    if (r) out.push({ sev: 'bad', text: tr`${nm(O)} под ${nm(C)}: в зоне раскачки ничего твёрдого`, ids: [O.uid, C.uid], hot: r });
     return;
   }
   const r = inter(body(A), body(B));
   if (r) {
     if ((a.flat || b.flat) && isWallKind(a) && isWallKind(b)) return; // станок поверх зеркала — нормально
-    out.push({ sev: 'bad', text: `${nm(A)} и ${nm(B)} стоят друг на друге`, ids: [A.uid, B.uid], hot: r });
+    out.push({ sev: 'bad', text: tr`${nm(A)} и ${nm(B)} стоят друг на друге`, ids: [A.uid, B.uid], hot: r });
     return;
   }
   zoneHit(A, B, out);
@@ -39,11 +39,11 @@ function zoneHit(Z, O, out) {
   const r = inter(zone(Z), body(O));
   if (!r) return;
   if (o.flat) {
-    if (z.disc === 'cf') out.push({ sev: 'bad', text: `${nm(O)} в зоне ${nm(Z)}: может разбиться`, ids: [O.uid, Z.uid], hot: r });
+    if (z.disc === 'cf') out.push({ sev: 'bad', text: tr`${nm(O)} в зоне ${nm(Z)}: может разбиться`, ids: [O.uid, Z.uid], hot: r });
     return;
   }
   if (o.kind === 'mat' && z.softOk) return;
-  const text = z.kind === 'door' ? `${nm(O)} загораживает проход у двери` : `${nm(O)} в зоне безопасности ${nm(Z)}`;
+  const text = z.kind === 'door' ? tr`${nm(O)} загораживает проход у двери` : tr`${nm(O)} в зоне безопасности ${nm(Z)}`;
   out.push({ sev: 'bad', text, ids: [O.uid, Z.uid], hot: r });
 }
 
@@ -57,24 +57,24 @@ function floorCover(r, ft) {
 // Нарушения одного предмета
 function itemIssues(it, out) {
   const c = CAT[it.id], { L, W, H } = state.room, room = rect(0, 0, L, W), b = body(it);
-  if (!inside(b, room)) out.push({ sev: 'bad', text: `${nm(it)} выходит за стены зала`, ids: [it.uid] });
-  if (isWallKind(c) && !touchesWall(it)) out.push({ sev: 'bad', text: `${nm(it)} должно висеть на стене`, ids: [it.uid] });
+  if (!inside(b, room)) out.push({ sev: 'bad', text: tr`${nm(it)} выходит за стены зала`, ids: [it.uid] });
+  if (isWallKind(c) && !touchesWall(it)) out.push({ sev: 'bad', text: tr`${nm(it)} должно висеть на стене`, ids: [it.uid] });
   if (c.h && c.kind !== 'floor') {
-    if (H < c.h[0]) out.push({ sev: 'bad', text: `${nm(it)}: нужен потолок от ${fmtM(c.h[0])} м, в зале ${fmtM(H)} м`, ids: [it.uid] });
-    else if (H < c.h[1]) out.push({ sev: 'warn', text: `${nm(it)}: потолок ${fmtM(H)} м — терпимо, лучше от ${fmtM(c.h[1])} м`, ids: [it.uid] });
+    if (H < c.h[0]) out.push({ sev: 'bad', text: tr`${nm(it)}: нужен потолок от ${fmtM(c.h[0])} м, в зале ${fmtM(H)} м`, ids: [it.uid], still: true });
+    else if (H < c.h[1]) out.push({ sev: 'warn', text: tr`${nm(it)}: потолок ${fmtM(H)} м — терпимо, лучше от ${fmtM(c.h[1])} м`, ids: [it.uid], still: true });
   }
   if (hasZone(it) && c.kind !== 'floor') {
     const z = zone(it), wm = wmargins(it);
     const over = [-z.y, z.x + z.w - L, z.y + z.h - W, -z.x];
     if (over.some((v, i) => v > 1 && wm[i] >= 50))
-      out.push({ sev: 'warn', text: `${nm(it)}: зона безопасности упирается в стену`, ids: [it.uid], hot: outsidePart(z, room) });
+      out.push({ sev: 'warn', text: tr`${nm(it)}: зона безопасности упирается в стену`, ids: [it.uid], hot: outsidePart(z, room) });
   }
   if (c.needFloor && floorCover(b, c.needFloor) < 0.9)
-    out.push({ sev: 'warn', text: `${nm(it)}: под ним нужно ${FLOORS[c.needFloor]}`, ids: [it.uid] });
+    out.push({ sev: 'warn', text: tr`${nm(it)}: под ним нужно ${FLOORS[c.needFloor]}`, ids: [it.uid] });
   if (c.needMat) {
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
     const ok = state.items.some((m) => CAT[m.id].landing && hasPoint(body(m), cx, cy));
-    if (!ok) out.push({ sev: 'bad', text: `${nm(it)}: под точкой нет страховочного мата`, ids: [it.uid] });
+    if (!ok) out.push({ sev: 'bad', text: tr`${nm(it)}: под точкой нет страховочного мата`, ids: [it.uid], still: true });
   }
 }
 // Кусок зоны за стеной — для подсветки
@@ -101,16 +101,16 @@ function runChecks() {
 
   const real = items.filter((i) => CAT[i.id].kind !== 'floor');
   if (real.length && !items.some((i) => CAT[i.id].kind === 'door'))
-    out.push({ sev: 'warn', text: 'Нет двери: не проверить, свободен ли вход', ids: [] });
+    out.push({ sev: 'warn', text: tr`Нет двери: не проверить, свободен ли вход`, ids: [], still: true });
   const cap = capacity();
   const people = Math.max(...Object.values(cap));
   if (people > 0) {
     const per = (L * W) / 1e4 / people;
-    if (per < 2) out.push({ sev: 'warn', text: `Тесно: ${fmtNum(per, 1)} м² на человека в самой большой группе, обычно от 2–4 м²`, ids: [] });
+    if (per < 2) out.push({ sev: 'warn', text: tr`Тесно: ${fmtNum(per, 1)} м² на человека в самой большой группе, обычно от 2–4 м²`, ids: [] });
   }
   const anchors = items.filter((i) => CAT[i.id].kind === 'ceil');
   if (anchors.length)
-    out.push({ sev: 'info', text: `Точек подвеса: ${anchors.length}. Каждой нужна закладная с паспортом от 10 кН и расчёт перекрытия`, ids: anchors.map((i) => i.uid) });
+    out.push({ sev: 'info', text: tr`Точек подвеса: ${anchors.length}. Каждой нужна закладная с паспортом от 10 кН и расчёт перекрытия`, ids: anchors.map((i) => i.uid) });
 
   out.sort((p, q) => SEV_RANK[q.sev] - SEV_RANK[p.sev]);
   const worst = new Map();
@@ -125,7 +125,7 @@ function placementScore(list, others) {
   for (const it of list) for (const o of others) pairIssues(it, o, out);
   let s = 0;
   for (const p of out) {
-    if (/потолок|страховочного|Нет двери/.test(p.text)) continue; // от места не зависит
+    if (p.still) continue; // от места не зависит
     s += p.sev === 'bad' ? 10 : p.sev === 'warn' ? 1 : 0;
   }
   return s;

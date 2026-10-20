@@ -18,12 +18,13 @@ function svgText(parent, x, y, text, attrs = {}) {
 }
 
 // ---------- Числа ----------
-const fmtNum = (v, d = 2) => v.toLocaleString('ru-RU', { maximumFractionDigits: d });
+const fmtNum = (v, d = 2) => v.toLocaleString(LOC, { maximumFractionDigits: d });
 const fmtM = (cm) => fmtNum(cm / 100);                 // 185 → «1,85»
 const fmtM2 = (cm2) => fmtNum(cm2 / 1e4, 1);           // 40000 → «4»
-const fmtRub = (v) => Math.round(v).toLocaleString('ru-RU') + ' ₽';
-const fmtRange = ([a, b]) => (a === b ? fmtRub(a) : `${Math.round(a).toLocaleString('ru-RU')}–${fmtRub(b)}`);
+const fmtRub = (v) => Math.round(v).toLocaleString(LOC) + ' ₽';
+const fmtRange = ([a, b]) => (a === b ? fmtRub(a) : `${Math.round(a).toLocaleString(LOC)}–${fmtRub(b)}`);
 function plural(n, [one, few, many]) {
+  if (EN) { const e = PLURAL_EN[one] || [one, one]; return n === 1 ? e[0] : e[1]; }
   const a = Math.abs(n) % 100, b = a % 10;
   return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many;
 }

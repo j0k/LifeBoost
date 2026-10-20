@@ -3,7 +3,7 @@ const SNAP = 10;
 const snap = (v) => Math.round(v / SNAP) * SNAP;
 
 const state = {
-  name: 'Мой зал',
+  name: tr`Мой зал`,
   room: { L: 1000, W: 800, H: 400 },
   items: [],        // { uid, id, x, y, rot, w, d, g }: x, y — левый верхний угол в плане; g — номер модуля (0 — сам по себе)
   kits: {},         // мелкий инвентарь: id → количество
@@ -137,7 +137,7 @@ function addItem(id, at) {
   state.items.push(it);
   const ok = at ? (placeList([it], at.x, at.y), true) : findSpot([it]);
   state.sel = it.uid;
-  if (!ok) toast('Свободного места не нашлось, поставил ближе всего к свободному: проверьте зоны.');
+  if (!ok) toast(tr`Свободного места не нашлось, поставил ближе всего к свободному: проверьте зоны.`);
   render();
 }
 
@@ -150,7 +150,7 @@ function addModule(mid, at) {
   for (const [k, n] of Object.entries(mod.kits || {})) state.kits[k] = (state.kits[k] || 0) + n;
   const ok = at ? (placeList(list, at.x, at.y), true) : findSpot(list);
   state.sel = list.find((i) => CAT[i.id].kind !== 'floor')?.uid ?? list[0].uid;
-  if (!ok) toast('Модулю не хватает места без пересечений — подвиньте соседей или увеличьте зал.');
+  if (!ok) toast(tr`Модулю не хватает места без пересечений — подвиньте соседей или увеличьте зал.`);
   render();
 }
 
@@ -193,9 +193,9 @@ function serialize() {
   };
 }
 function load(o) {
-  if (!o || !Array.isArray(o.r) || !Array.isArray(o.i)) throw new Error('не похоже на проект LifeBoost');
+  if (!o || !Array.isArray(o.r) || !Array.isArray(o.i)) throw new Error(tr`не похоже на проект LifeBoost`);
   const [L, W, H] = o.r.map(Number);
-  state.name = typeof o.n === 'string' ? o.n.slice(0, 80) : 'Мой зал';
+  state.name = typeof o.n === 'string' ? o.n.slice(0, 80) : tr`Мой зал`;
   state.room = { L: clamp(L || 1000, 150, 5000), W: clamp(W || 800, 150, 5000), H: clamp(H || 300, 200, 1500) };
   state.items = o.i.filter((a) => CAT[a[0]] && CAT[a[0]].kind !== 'kit')
     .map(([id, x, y, rot, w, d, g, m]) => {

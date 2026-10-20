@@ -26,8 +26,8 @@ function renderRoomFields() {
   if (document.activeElement !== $('#projName')) $('#projName').value = state.name;
   document.title = `${state.name} · LifeBoost`;
   $('#stampName').textContent = state.name;
-  $('#stampSize').textContent = `${fmtM(L)} × ${fmtM(W)} × ${fmtM(H)} м`;
-  $('#stampDate').textContent = new Date().toLocaleDateString('ru-RU');
+  $('#stampSize').textContent = tr`${fmtM(L)} × ${fmtM(W)} × ${fmtM(H)} м`;
+  $('#stampDate').textContent = new Date().toLocaleDateString(LOC);
 }
 
 // Зал поменял размер: все модули остаются внутри, настенные — на своих стенах
@@ -77,27 +77,31 @@ function share() {
   // Если смотрят в 3D — ссылка откроет 3D с тем же ракурсом
   const o = v3.orbit, cam = v3.on && o.t;
   if (cam) url += '&v=' + [o.th, o.ph, o.r, o.t.x, o.t.y, o.t.z].map((n) => +n.toFixed(3)).join(',');
-  const done = () => toast(cam ? 'Ссылка на проект и ракурс 3D скопирована' : 'Ссылка на проект скопирована');
-  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => { history.replaceState(null, '', url); toast('Ссылка в адресной строке — скопируйте её'); });
-  else { history.replaceState(null, '', url); toast('Ссылка в адресной строке — скопируйте её'); }
+  const done = () => toast(cam ? tr`Ссылка на проект и ракурс 3D скопирована` : tr`Ссылка на проект скопирована`);
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => { history.replaceState(null, '', url); toast(tr`Ссылка в адресной строке — скопируйте её`); });
+  else { history.replaceState(null, '', url); toast(tr`Ссылка в адресной строке — скопируйте её`); }
 }
 
 // ---------- Запуск ----------
+translateData();
+translateDom();
+$('#hint3d').textContent = HINT3D;
+if (EN) Object.assign($('#langLink'), { href: location.pathname, hreflang: 'ru', lang: 'ru', title: 'Русский', textContent: 'RU' });
 buildPlan();
-$('#tplSel').innerHTML = '<option value="">Шаблон зала…</option>' + TEMPLATES.map((t) =>
-  `<option value="${t.id}">${t.name} · ${fmtM(t.room[0])}×${fmtM(t.room[1])} м</option>`).join('');
+$('#tplSel').innerHTML = `<option value="">${tr`Шаблон зала…`}</option>` + TEMPLATES.map((t) =>
+  `<option value="${t.id}">${t.name} · ${tr`${fmtM(t.room[0])}×${fmtM(t.room[1])} м`}</option>`).join('');
 $('#tplSel').onchange = (e) => {
   if (!e.target.value) return;
   beginChange();
   applyTemplate(e.target.value);
   e.target.value = '';
   render();
-  toast('Шаблон загружен. Ctrl+Z вернёт прежний план');
+  toast(tr`Шаблон загружен. Ctrl+Z вернёт прежний план`);
 };
 $('#roomL').onchange = (e) => setRoom('L', e.target.value);
 $('#roomW').onchange = (e) => setRoom('W', e.target.value);
 $('#roomH').onchange = (e) => setRoom('H', e.target.value);
-$('#projName').onchange = (e) => { beginChange(); state.name = e.target.value.trim().slice(0, 80) || 'Мой зал'; render(); };
+$('#projName').onchange = (e) => { beginChange(); state.name = e.target.value.trim().slice(0, 80) || tr`Мой зал`; render(); };
 for (const k of Object.keys(state.view)) {
   const b = $(`[data-view="${k}"]`);
   b.setAttribute('aria-pressed', String(state.view[k]));
@@ -117,8 +121,8 @@ $('#fileIn').onchange = async (e) => {
   const f = e.target.files[0];
   e.target.value = '';
   if (!f) return;
-  try { const o = JSON.parse(await f.text()); beginChange(); load(o); render(); toast(`Открыт проект «${state.name}»`); }
-  catch (err) { toast('Не получилось открыть: ' + err.message); }
+  try { const o = JSON.parse(await f.text()); beginChange(); load(o); render(); toast(tr`Открыт проект «${state.name}»`); }
+  catch (err) { toast(tr`Не получилось открыть: ${err.message}`); }
 };
 $('#palTabs').onclick = (e) => { const g = e.target.closest('[data-g]'); if (g) { palGrp = g.dataset.g; palQuery = ''; $('#palSearch').value = ''; renderPalette(); } };
 $('#palSearch').oninput = (e) => { palQuery = e.target.value; renderPalette(); };
@@ -151,7 +155,7 @@ document.addEventListener('keydown', onKey);
   if (cam && cam.length === 6 && cam.every(Number.isFinite)) v3.pendingCam = cam;
   if (m) {
     try { load(decodeShare(m[1])); history.replaceState(null, '', location.pathname + location.search); return; }
-    catch (e) { v3.pendingCam = null; toast('Ссылка на проект повреждена, открыт последний план'); }
+    catch (e) { v3.pendingCam = null; toast(tr`Ссылка на проект повреждена, открыт последний план`); }
   }
   if (!loadLocal()) applyTemplate('multi');
 })();

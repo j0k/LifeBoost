@@ -4,8 +4,8 @@ const THREE_SRC = [
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js',
 ];
-const HINT3D = 'тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать';
-const HINT3D_EDIT = 'тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать';
+const HINT3D = tr`тяните — вращать · правая кнопка или Shift — сдвиг · колесо — масштаб · клик — выбрать`;
+const HINT3D_EDIT = tr`тяните предмет или человека — двигать по полу · R — повернуть · Delete — удалить · пустое место — вращать`;
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
   on: false, loading: null, renderer: null, scene: null, cam: null, root: null, walls: [], pick: [],
@@ -19,7 +19,7 @@ function loadThree() {
     const s = document.createElement('script');
     s.src = THREE_SRC[i];
     s.onload = res;
-    s.onerror = () => { s.remove(); i + 1 < THREE_SRC.length ? tryLoad(i + 1).then(res, rej) : rej(new Error('нет связи с CDN')); };
+    s.onerror = () => { s.remove(); i + 1 < THREE_SRC.length ? tryLoad(i + 1).then(res, rej) : rej(new Error(tr`нет связи с CDN`)); };
     document.head.appendChild(s);
   });
   return (v3.loading = tryLoad(0).catch((e) => { v3.loading = null; throw e; }));
@@ -34,7 +34,7 @@ function setView3d(on) {
   $('#hint3d').hidden = !on;
   if (!on) return;
   loadThree().then(() => { if (!v3.renderer) init3d(); build3d(); }, (e) => {
-    toast('3D не загрузился: ' + e.message);
+    toast(tr`3D не загрузился: ${e.message}`);
     setView3d(false);
   });
 }
@@ -248,7 +248,7 @@ function buildPerson(root) {
   const [x, y] = v3.personAt ? [clamp(v3.personAt[0], 25, L - 25), clamp(v3.personAt[1], 25, W - 25)] : personSpot();
   g.position.set(x / 100, 0, y / 100);
   g.rotation.y = v3.orbit.th;
-  const t = letter('1,75 м', 0.22, 36);
+  const t = letter(tr`1,75 м`, 0.22, 36);
   t.position.set(0.42, 1.75, 0);
   g.add(t);
   g.traverse((o) => { if (o.isMesh) { o.userData.person = true; v3.pick.push(o); } });
@@ -477,7 +477,7 @@ function bindOrbit(cv) {
     cv.style.cursor = !hit ? 'grab' : v3.edit ? 'move' : 'pointer';
     if (!it && !person) { tip.hidden = true; return; }
     const r = cv.getBoundingClientRect();
-    tip.textContent = person ? 'Человек 1,75 м, рука вверх — 2,25 м' : CAT[it.id].name;
+    tip.textContent = person ? tr`Человек 1,75 м, рука вверх — 2,25 м` : CAT[it.id].name;
     tip.style.left = `${e.clientX - r.left + 14}px`;
     tip.style.top = `${e.clientY - r.top + 14}px`;
     tip.hidden = false;

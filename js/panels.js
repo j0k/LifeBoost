@@ -7,7 +7,7 @@ function qtyOf(id, w, d) {
   const c = CAT[id];
   return c.unit === 'm2' ? (w * d) / 1e4 : c.unit === 'm' ? w / 100 : 1;
 }
-const unitName = (c) => (c.unit === 'm2' ? 'м²' : c.unit === 'm' ? 'м' : 'шт');
+const unitName = (c) => (c.unit === 'm2' ? tr`м²` : c.unit === 'm' ? tr`м` : tr`шт`);
 function moduleCost(mod) {
   let lo = 0, hi = 0;
   for (const [id, , , , w, d] of mod.items) { const q = qtyOf(id, w ?? CAT[id].w, d ?? CAT[id].d); lo += CAT[id].price[0] * q; hi += CAT[id].price[1] * q; }
@@ -54,27 +54,27 @@ function renderPalette() {
   const its = CATALOG.filter((c) => (q ? c.name.toLowerCase().includes(q) : c.grp === palGrp));
   let html = '';
   if (mods.length) {
-    html += `<div class="pal-sub">Модули <span class="hint">— готовые кубики</span></div>`;
+    html += `<div class="pal-sub">${tr`Модули`} <span class="hint">${tr`— готовые кубики`}</span></div>`;
     html += mods.map((m) => {
       const color = DISC[CAT[m.items.find(([id]) => CAT[id].kind !== 'floor')?.[0] || m.items[0][0]].disc].color;
       return `<button type="button" class="card mod" data-add="m:${m.id}" draggable="true" title="${esc(m.note || '')}">
         ${iconSvg(moduleRects(m), color)}
-        <span class="ct"><b>${esc(m.name)}</b><span class="hint">${m.area} · ${m.items.length} ${plural(m.items.length, ['предмет', 'предмета', 'предметов'])}</span></span>
+        <span class="ct"><b>${esc(m.name)}</b><span class="hint">${tr`${m.area.replace(/ м²$/, '')} м²`} · ${m.items.length} ${plural(m.items.length, ['предмет', 'предмета', 'предметов'])}</span></span>
         <span class="sz s-${m.size}">${m.size}</span><span class="pr">${fmtRange(moduleCost(m))}</span></button>`;
     }).join('');
   }
   if (its.length) {
-    html += `<div class="pal-sub">${palGrp === 'kit' && !q ? 'Без места на плане' : 'Отдельные предметы'}</div>`;
+    html += `<div class="pal-sub">${palGrp === 'kit' && !q ? tr`Без места на плане` : tr`Отдельные предметы`}</div>`;
     html += its.map((c) => {
       const kit = c.kind === 'kit';
-      const sub = kit ? `в закупке: ${state.kits[c.id] || 0} шт` : `${fmtM(c.w)} × ${fmtM(c.d)} м${c.resize ? ', тянется' : ''}`;
+      const sub = kit ? tr`в закупке: ${state.kits[c.id] || 0} шт` : tr`${fmtM(c.w)} × ${fmtM(c.d)} м` + (c.resize ? tr`, тянется` : '');
       const pr = c.price[1] ? `${fmtRange(c.price)}${c.unit ? '/' + unitName(c) : ''}` : '—';
       return `<button type="button" class="card" data-add="i:${c.id}" ${kit ? '' : 'draggable="true"'}>
         ${kit ? `<span class="kit-ico" style="--c:${DISC[c.disc].color}">+</span>` : iconSvg([{ ...rect(0, 0, c.w, c.d), f: c.kind === 'floor' }], DISC[c.disc].color)}
         <span class="ct"><b>${esc(c.name)}</b><span class="hint">${sub}</span></span><span class="pr">${pr}</span></button>`;
     }).join('');
   }
-  if (!html) html = '<p class="hint">Ничего не нашлось.</p>';
+  if (!html) html = `<p class="hint">${tr`Ничего не нашлось.`}</p>`;
   $('#palList').innerHTML = html;
 }
 
@@ -82,11 +82,11 @@ function renderPalette() {
 function renderInspector() {
   const el = $('#insp'), it = byUid(state.sel);
   if (!it) {
-    el.innerHTML = `<div class="panel-head"><h2>Свойства</h2></div>
-      <p class="hint">Нажмите на предмет на плане или добавьте модуль из каталога — кликом или перетаскиванием на план.</p>
-      <dl class="keys"><dt>Тащить</dt><dd>двигать; модуль едет целиком, настенное липнет к стене</dd>
-      <dt>R / Shift+R</dt><dd>повернуть (настенное — на соседнюю стену)</dd><dt>← ↑ → ↓</dt><dd>сдвиг на 10 см, с Shift — на 50</dd>
-      <dt>Ctrl+D</dt><dd>копия</dd><dt>Delete</dt><dd>удалить</dd><dt>Ctrl+Z / Ctrl+Y</dt><dd>отменить / вернуть</dd></dl>
+    el.innerHTML = `<div class="panel-head"><h2>${tr`Свойства`}</h2></div>
+      <p class="hint">${tr`Нажмите на предмет на плане или добавьте модуль из каталога — кликом или перетаскиванием на план.`}</p>
+      <dl class="keys"><dt>${tr`Тащить`}</dt><dd>${tr`двигать; модуль едет целиком, настенное липнет к стене`}</dd>
+      <dt>R / Shift+R</dt><dd>${tr`повернуть (настенное — на соседнюю стену)`}</dd><dt>← ↑ → ↓</dt><dd>${tr`сдвиг на 10 см, с Shift — на 50`}</dd>
+      <dt>Ctrl+D</dt><dd>${tr`копия`}</dd><dt>Delete</dt><dd>${tr`удалить`}</dd><dt>Ctrl+Z / Ctrl+Y</dt><dd>${tr`отменить / вернуть`}</dd></dl>
       <div class="legend">${Object.entries(DISC).map(([, d]) => `<span><i style="--c:${d.color}"></i>${d.name}</span>`).join('')}</div>`;
     return;
   }
@@ -96,29 +96,29 @@ function renderInspector() {
   const m = c.m || [0, 0, 0, 0];
   const capTxt = Object.entries(c.cap || {}).map(([k, n]) => `${DISC[k].name.toLowerCase()} — ${n}`).join(', ');
   const fld = (f, label, val, step = 0.1) => `<label class="field"><span>${label}</span><input type="number" data-f="${f}" value="${fmtNum(val / 100, 2).replace(',', '.')}" step="${step}" min="0"></label>`;
-  el.innerHTML = `<div class="panel-head"><h2>Свойства</h2>${MARKS.get(it.id) ? `<span class="hint mono">поз. ${MARKS.get(it.id)}</span>` : ''}</div>
-    <div class="insp-title"><i style="--c:${DISC[c.disc].color}"></i><div><b>${esc(c.name)}</b><div class="hint">${DISC[c.disc].name}${c.kind === 'ceil' ? ' · крепится к потолку' : isWallKind(c) ? ' · на стене ' + WALL_NAMES[it.rot / 90] : ''}</div></div></div>
-    ${list.length > 1 ? `<div class="grpbox"><span>Модуль «${esc(mod ? mod.name : 'группа')}» · ${list.length} ${plural(list.length, ['предмет', 'предмета', 'предметов'])}, двигается целиком</span>
-      <span class="row"><button class="btn sm" data-act="ungroup" type="button">Разгруппировать</button><button class="btn sm" data-act="delOne" type="button">Убрать только этот</button></span></div>` : ''}
+  el.innerHTML = `<div class="panel-head"><h2>${tr`Свойства`}</h2>${MARKS.get(it.id) ? `<span class="hint mono">${tr`поз. ${MARKS.get(it.id)}`}</span>` : ''}</div>
+    <div class="insp-title"><i style="--c:${DISC[c.disc].color}"></i><div><b>${esc(c.name)}</b><div class="hint">${DISC[c.disc].name}${c.kind === 'ceil' ? tr` · крепится к потолку` : isWallKind(c) ? tr` · на стене ${WALL_NAMES[it.rot / 90]}` : ''}</div></div></div>
+    ${list.length > 1 ? `<div class="grpbox"><span>${tr`Модуль «${esc(mod ? mod.name : tr`группа`)}» · ${list.length} ${plural(list.length, ['предмет', 'предмета', 'предметов'])}, двигается целиком`}</span>
+      <span class="row"><button class="btn sm" data-act="ungroup" type="button">${tr`Разгруппировать`}</button><button class="btn sm" data-act="delOne" type="button">${tr`Убрать только этот`}</button></span></div>` : ''}
     <div class="grid2">
-      ${fld('x', 'От стены Г, м', b.x)}${fld('y', 'От стены А, м', b.y)}
-      ${c.resize ? fld('fw', 'Ширина на плане, м', b.w) + (c.resize === 'w' ? '' : fld('fd', 'Глубина на плане, м', b.h)) : ''}
+      ${fld('x', tr`От стены ${WALL_NAMES[3]}, м`, b.x)}${fld('y', tr`От стены ${WALL_NAMES[0]}, м`, b.y)}
+      ${c.resize ? fld('fw', tr`Ширина на плане, м`, b.w) + (c.resize === 'w' ? '' : fld('fd', tr`Глубина на плане, м`, b.h)) : ''}
     </div>
     <div class="row">
       <button class="btn" data-act="rotL" type="button" title="Shift+R">⟲ 90°</button><button class="btn" data-act="rotR" type="button" title="R">⟳ 90°</button>
-      <button class="btn" data-act="dup" type="button" title="Ctrl+D">Копия</button><button class="btn danger" data-act="del" type="button" title="Delete">Удалить${list.length > 1 ? ' модуль' : ''}</button>
+      <button class="btn" data-act="dup" type="button" title="Ctrl+D">${tr`Копия`}</button><button class="btn danger" data-act="del" type="button" title="Delete">${list.length > 1 ? tr`Удалить модуль` : tr`Удалить`}</button>
     </div>
     <dl class="facts">
-      <dt>Размер</dt><dd>${fmtM(c.kind === 'floor' ? it.w : c.w)} × ${fmtM(c.kind === 'floor' ? it.d : c.d)} м${c.hgt ? `, высота ${fmtM(c.hgt)} м` : ''}</dd>
-      ${hasZone(it) ? `<dt>Зона безопасности</dt><dd>${m.every((v) => v === m[0]) ? `${fmtM(m[0])} м вокруг` : `${m.map(fmtM).join(' / ')} м<span class="hint"> (сзади·справа·спереди·слева)</span>`}</dd>` : ''}
-      ${c.h ? `<dt>Потолок</dt><dd>от ${fmtM(c.h[0])} м, лучше ${fmtM(c.h[1])} м</dd>` : ''}
-      ${c.elev ? `<dt>На стене</dt><dd>от +${fmtM(c.elev[0])} до +${fmtM(c.elev[0] + c.elev[1])} м</dd>` : ''}
-      ${c.needFloor ? `<dt>Покрытие</dt><dd>${FLOORS[c.needFloor]}</dd>` : ''}
-      ${capTxt ? `<dt>Занимаются</dt><dd>${capTxt}</dd>` : ''}
-      ${c.price[1] ? `<dt>Цена</dt><dd>${fmtRange(c.price.map((p) => p * q))}${c.unit ? ` <span class="hint">(${fmtNum(q, 1)} ${unitName(c)} × ${fmtRange(c.price)})</span>` : ''}</dd>` : ''}
+      <dt>${tr`Размер`}</dt><dd>${tr`${fmtM(c.kind === 'floor' ? it.w : c.w)} × ${fmtM(c.kind === 'floor' ? it.d : c.d)} м`}${c.hgt ? tr`, высота ${fmtM(c.hgt)} м` : ''}</dd>
+      ${hasZone(it) ? `<dt>${tr`Зона безопасности`}</dt><dd>${m.every((v) => v === m[0]) ? tr`${fmtM(m[0])} м вокруг` : `${tr`${m.map(fmtM).join(' / ')} м`}<span class="hint"> ${tr`(сзади·справа·спереди·слева)`}</span>`}</dd>` : ''}
+      ${c.h ? `<dt>${tr`Потолок`}</dt><dd>${tr`от ${fmtM(c.h[0])} м, лучше ${fmtM(c.h[1])} м`}</dd>` : ''}
+      ${c.elev ? `<dt>${tr`На стене`}</dt><dd>${tr`от +${fmtM(c.elev[0])} до +${fmtM(c.elev[0] + c.elev[1])} м`}</dd>` : ''}
+      ${c.needFloor ? `<dt>${tr`Покрытие`}</dt><dd>${FLOORS[c.needFloor]}</dd>` : ''}
+      ${capTxt ? `<dt>${tr`Занимаются`}</dt><dd>${capTxt}</dd>` : ''}
+      ${c.price[1] ? `<dt>${tr`Цена`}</dt><dd>${fmtRange(c.price.map((p) => p * q))}${c.unit ? ` <span class="hint">(${fmtNum(q, 1)} ${unitName(c)} × ${fmtRange(c.price)})</span>` : ''}</dd>` : ''}
     </dl>
     ${c.note ? `<p class="note">${esc(c.note)}</p>` : ''}
-    ${issues.length ? `<ul class="issues">${issues.map((p) => `<li class="${p.sev}">${esc(p.text)}</li>`).join('')}</ul>` : '<p class="ok-line">Здесь всё в порядке</p>'}`;
+    ${issues.length ? `<ul class="issues">${issues.map((p) => `<li class="${p.sev}">${esc(p.text)}</li>`).join('')}</ul>` : `<p class="ok-line">${tr`Здесь всё в порядке`}</p>`}`;
 }
 function onInspector(e) {
   const a = e.target.closest('[data-act]')?.dataset.act;
@@ -154,11 +154,11 @@ function renderChecks() {
   checks.list.forEach((p) => n[p.sev]++);
   const chip = $('#chipChecks');
   chip.className = 'chip ' + (n.bad ? 'bad' : n.warn ? 'warn' : '');
-  chip.querySelector('.t').textContent = n.bad ? `${n.bad} ${plural(n.bad, ['ошибка', 'ошибки', 'ошибок'])}` : n.warn ? `${n.warn} ${plural(n.warn, ['замечание', 'замечания', 'замечаний'])}` : 'без ошибок';
+  chip.querySelector('.t').textContent = n.bad ? `${n.bad} ${plural(n.bad, ['ошибка', 'ошибки', 'ошибок'])}` : n.warn ? `${n.warn} ${plural(n.warn, ['замечание', 'замечания', 'замечаний'])}` : tr`без ошибок`;
   $('#checksSum').textContent = `${n.bad} ${plural(n.bad, ['ошибка', 'ошибки', 'ошибок'])} · ${n.warn} ${plural(n.warn, ['замечание', 'замечания', 'замечаний'])}`;
   $('#checks').innerHTML = checks.list.length
     ? checks.list.map((p, i) => `<li><button type="button" class="${p.sev}" data-i="${i}" ${p.ids.length ? '' : 'disabled'}>${esc(p.text)}</button></li>`).join('')
-    : '<li class="ok-line">Нарушений нет: зоны не пересекаются, потолка хватает, всё на своих местах.</li>';
+    : `<li class="ok-line">${tr`Нарушений нет: зоны не пересекаются, потолка хватает, всё на своих местах.`}</li>`;
 }
 
 // ---------- Сводка ----------
@@ -189,13 +189,13 @@ function renderStats() {
   const buy = rows.filter((r) => !state.owned.has(r.id)).reduce((s, r) => [s[0] + r.sum[0], s[1] + r.sum[1]], [0, 0]);
   $('#stats').innerHTML = `
     <div class="totals">
-      <div><span class="hint">Площадь</span><b>${fmtNum(total, 1)} м²</b><span class="hint">${fmtM(L)} × ${fmtM(W)} м, потолок ${fmtM(H)} м</span></div>
-      <div><span class="hint">Занято снарядами и зонами</span><b>${Math.round((occ / total) * 100)}%</b><span class="hint">свободно ≈${fmtNum(total - occ, 1)} м²</span></div>
-      <div><span class="hint">Бюджет на всё</span><b>${fmtRange(sum.map((v) => Math.round(v / 1000) * 1000))}</b><span class="hint">к покупке: ${fmtRange(buy.map((v) => Math.round(v / 1000) * 1000))}</span></div>
+      <div><span class="hint">${tr`Площадь`}</span><b>${tr`${fmtNum(total, 1)} м²`}</b><span class="hint">${tr`${fmtM(L)} × ${fmtM(W)} м, потолок ${fmtM(H)} м`}</span></div>
+      <div><span class="hint">${tr`Занято снарядами и зонами`}</span><b>${Math.round((occ / total) * 100)}%</b><span class="hint">${tr`свободно ≈${fmtNum(total - occ, 1)} м²`}</span></div>
+      <div><span class="hint">${tr`Бюджет на всё`}</span><b>${fmtRange(sum.map((v) => Math.round(v / 1000) * 1000))}</b><span class="hint">${tr`к покупке: ${fmtRange(buy.map((v) => Math.round(v / 1000) * 1000))}`}</span></div>
     </div>
     <div class="caps">${CAP_DISC.map((k) => `<div class="cap"><span>${DISC[k].name}</span><span class="bar"><i style="width:${(cap[k] / maxCap) * 100}%;--c:${DISC[k].color}"></i></span><b>${cap[k]}</b></div>`).join('')}</div>
-    <p class="hint">Вместимость — сколько человек одновременно занимается на поставленных снарядах.
-      Покрытия: ${Object.entries(floors).map(([k, v]) => `${FLOORS[k]} ${fmtNum(v, 1)} м²`).join(', ') || 'не заданы'}.</p>`;
+    <p class="hint">${tr`Вместимость — сколько человек одновременно занимается на поставленных снарядах.`}
+      ${tr`Покрытия: ${Object.entries(floors).map(([k, v]) => tr`${FLOORS[k]} ${fmtNum(v, 1)} м²`).join(', ') || tr`не заданы`}.`}</p>`;
 }
 
 // ---------- Спецификация и закупка ----------
@@ -208,18 +208,18 @@ function renderBom() {
     lastGrp = r.c.grp;
     const kit = r.c.kind === 'kit';
     const qty = kit
-      ? `<span class="step"><button type="button" data-kit="${r.id}" data-d="-1" aria-label="Меньше">−</button><b>${r.qty}</b><button type="button" data-kit="${r.id}" data-d="1" aria-label="Больше">+</button></span>`
+      ? `<span class="step"><button type="button" data-kit="${r.id}" data-d="-1" aria-label="${tr`Меньше`}">−</button><b>${r.qty}</b><button type="button" data-kit="${r.id}" data-d="1" aria-label="${tr`Больше`}">+</button></span>`
       : `${fmtNum(r.qty, 1)}`;
     return `${head}<tr class="${state.owned.has(r.id) ? 'owned' : ''}">
       <td class="mk">${r.mark}</td><td>${esc(r.c.name)}</td><td class="num">${qty} ${unitName(r.c)}</td>
       <td class="num">${fmtRange(r.c.price)}</td><td class="num">${fmtRange(r.sum)}</td>
-      <td class="own"><label title="Уже есть — не покупать"><input type="checkbox" data-own="${r.id}" ${state.owned.has(r.id) ? 'checked' : ''}><span>есть</span></label></td></tr>`;
+      <td class="own"><label title="${tr`Уже есть — не покупать`}"><input type="checkbox" data-own="${r.id}" ${state.owned.has(r.id) ? 'checked' : ''}><span>${tr`есть`}</span></label></td></tr>`;
   }).join('');
   const all = tot(() => true), buy = tot((r) => !state.owned.has(r.id));
-  $('#bom').innerHTML = rows.length ? `<table class="bom"><thead><tr><th>Поз.</th><th>Наименование</th><th class="num">Кол-во</th><th class="num">Цена за ед.</th><th class="num">Сумма</th><th></th></tr></thead>
-    <tbody>${body}</tbody><tfoot><tr><td></td><td>Итого</td><td></td><td></td><td class="num">${fmtRange(all)}</td><td></td></tr>
-    <tr class="buy"><td></td><td>К покупке</td><td></td><td></td><td class="num">${fmtRange(buy)}</td><td></td></tr></tfoot></table>`
-    : '<p class="hint">Пока пусто: добавьте модули из каталога.</p>';
+  $('#bom').innerHTML = rows.length ? `<table class="bom"><thead><tr><th>${tr`Поз.`}</th><th>${tr`Наименование`}</th><th class="num">${tr`Кол-во`}</th><th class="num">${tr`Цена за ед.`}</th><th class="num">${tr`Сумма`}</th><th></th></tr></thead>
+    <tbody>${body}</tbody><tfoot><tr><td></td><td>${tr`Итого`}</td><td></td><td></td><td class="num">${fmtRange(all)}</td><td></td></tr>
+    <tr class="buy"><td></td><td>${tr`К покупке`}</td><td></td><td></td><td class="num">${fmtRange(buy)}</td><td></td></tr></tfoot></table>`
+    : `<p class="hint">${tr`Пока пусто: добавьте модули из каталога.`}</p>`;
 }
 function onBom(e) {
   const k = e.target.closest('[data-kit]');
@@ -241,7 +241,7 @@ function onBomChange(e) {
 function bomCsv() {
   const rows = bomRows();
   const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-  const lines = [['Поз.', 'Наименование', 'Кол-во', 'Ед.', 'Цена от', 'Цена до', 'Сумма от', 'Сумма до', 'Уже есть'].map(q).join(';')];
-  for (const r of rows) lines.push([r.mark, r.c.name, fmtNum(r.qty, 2), unitName(r.c), r.c.price[0], r.c.price[1], Math.round(r.sum[0]), Math.round(r.sum[1]), state.owned.has(r.id) ? 'да' : ''].map(q).join(';'));
-  download(`${fileBase()}-zakupka.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+  const lines = [[tr`Поз.`, tr`Наименование`, tr`Кол-во`, tr`Ед.`, tr`Цена от`, tr`Цена до`, tr`Сумма от`, tr`Сумма до`, tr`Уже есть`].map(q).join(';')];
+  for (const r of rows) lines.push([r.mark, r.c.name, fmtNum(r.qty, 2), unitName(r.c), r.c.price[0], r.c.price[1], Math.round(r.sum[0]), Math.round(r.sum[1]), state.owned.has(r.id) ? tr`да` : ''].map(q).join(';'));
+  download(`${fileBase()}-${EN ? 'shopping' : 'zakupka'}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
 }

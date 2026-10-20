@@ -1,7 +1,7 @@
 // План зала в SVG: сетка, стены, покрытия, зоны безопасности, предметы, размеры. Перетаскивание и изменение размеров.
 const WALL_T = 16;
 const plan = { svg: null, drag: null, pad: 90, fs: 14 };
-const WALL_NAMES = ['А', 'Б', 'В', 'Г'];
+const WALL_NAMES = EN ? ['A', 'B', 'C', 'D'] : ['А', 'Б', 'В', 'Г'];
 
 function buildPlan() {
   const svg = plan.svg = $('#plan');
@@ -66,7 +66,7 @@ function renderPlan(svg = plan.svg, opts = {}) {
     svgEl('rect', { x: b.x, y: b.y, width: b.w, height: b.h, class: 'p-fl' + (selSet.has(it.uid) ? ' sel' : ''),
       style: `fill:url(#fl-${c.ft})`, 'data-uid': it.uid }, g);
     if (state.view.labels && !opts.noLabels)
-      svgText(g, b.x + fs * 0.4, b.y + fs * 1.1, `${c.short} · ${fmtM2(b.w * b.h)} м²`, { class: 'p-fl-l' });
+      svgText(g, b.x + fs * 0.4, b.y + fs * 1.1, tr`${c.short} · ${fmtM2(b.w * b.h)} м²`, { class: 'p-fl-l' });
   }
   // Зоны безопасности
   if (state.view.zones) {
@@ -198,14 +198,14 @@ function drawSelDims(g, B, fs) {
 }
 function drawRoomDims(g, fs) {
   const { L, W } = state.room, o = plan.pad * 0.55;
-  dimLine(g, 0, -o, L, -o, `${fmtM(L)} м`, fs * 1.1);
-  dimLine(g, -o, 0, -o, W, `${fmtM(W)} м`, fs * 1.1);
+  dimLine(g, 0, -o, L, -o, tr`${fmtM(L)} м`, fs * 1.1);
+  dimLine(g, -o, 0, -o, W, tr`${fmtM(W)} м`, fs * 1.1);
   // Буквы стен — те же, что на развёртках
   const k = WALL_T + fs * 0.6;
-  svgText(g, 0, -k, `стена ${WALL_NAMES[0]}`, { class: 'p-wl', 'text-anchor': 'start' });
-  svgText(g, L + k + fs * 1.6, W / 2, `стена ${WALL_NAMES[1]}`, { class: 'p-wl', transform: `rotate(90 ${L + k + fs * 1.6} ${W / 2})` });
-  svgText(g, L / 2, W + k + fs * 1.9, `стена ${WALL_NAMES[2]}`, { class: 'p-wl' });
-  svgText(g, -k, W / 2, `стена ${WALL_NAMES[3]}`, { class: 'p-wl', transform: `rotate(-90 ${-k} ${W / 2})` });
+  svgText(g, 0, -k, tr`стена ${WALL_NAMES[0]}`, { class: 'p-wl', 'text-anchor': 'start' });
+  svgText(g, L + k + fs * 1.6, W / 2, tr`стена ${WALL_NAMES[1]}`, { class: 'p-wl', transform: `rotate(90 ${L + k + fs * 1.6} ${W / 2})` });
+  svgText(g, L / 2, W + k + fs * 1.9, tr`стена ${WALL_NAMES[2]}`, { class: 'p-wl' });
+  svgText(g, -k, W / 2, tr`стена ${WALL_NAMES[3]}`, { class: 'p-wl', transform: `rotate(-90 ${-k} ${W / 2})` });
   // Метры по краю
   for (let x = 100; x < L; x += 100) svgText(g, x, W + WALL_T + fs * 1.05, String(x / 100), { class: 'p-ruler' });
   for (let y = 100; y < W; y += 100) svgText(g, L + WALL_T + fs * 0.4, y + fs * 0.35, String(y / 100), { class: 'p-ruler', 'text-anchor': 'start' });

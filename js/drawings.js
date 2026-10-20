@@ -20,7 +20,7 @@ function renderSection() {
   // Шкала
   for (let m = 0; m <= maxH; m += 100) {
     svgEl('line', { x1: left, y1: y(m), x2: Wv - 8, y2: y(m), class: 's-grid' }, svg);
-    svgText(svg, left - 8, y(m) + 4, `${m / 100} м`, { class: 's-ax' });
+    svgText(svg, left - 8, y(m) + 4, tr`${m / 100} м`, { class: 's-ax' });
   }
   svgEl('line', { x1: left, y1: base, x2: Wv - 8, y2: base, class: 's-floor' }, svg);
   const colW = (Wv - left - 16) / Math.max(cols, 6);
@@ -46,8 +46,8 @@ function renderSection() {
   });
   // Потолок
   svgEl('line', { x1: left, y1: y(H), x2: Wv - 8, y2: y(H), class: 's-ceil' }, svg);
-  svgText(svg, Wv - 10, y(H) - 7, `потолок ${fmtM(H)} м`, { class: 's-ceil-t' });
-  if (!ids.length) svgText(svg, left + 20, y(maxH * 0.6), 'Добавьте снаряды: здесь будет видно, хватает ли потолка', { class: 's-empty' });
+  svgText(svg, Wv - 10, y(H) - 7, tr`потолок ${fmtM(H)} м`, { class: 's-ceil-t' });
+  if (!ids.length) svgText(svg, left + 20, y(maxH * 0.6), tr`Добавьте снаряды: здесь будет видно, хватает ли потолка`, { class: 's-empty' });
 }
 function wrapLabel(svg, x, y0, text, maxW, cls = 's-lbl') {
   const words = String(text).split(' '), lines = [];
@@ -101,9 +101,9 @@ function renderWalls() {
     const fig = document.createElement('figure');
     fig.className = 'wall-fig';
     const cap = document.createElement('figcaption');
-    cap.innerHTML = `<b>Стена ${WALL_NAMES[side]}</b> <span class="hint">${fmtM(len)} × ${fmtM(H)} м · ${list.length ? list.length + ' ' + plural(list.length, ['элемент', 'элемента', 'элементов']) : 'пусто'}</span>`;
+    cap.innerHTML = `<b>${tr`Стена ${WALL_NAMES[side]}`}</b> <span class="hint">${tr`${fmtM(len)} × ${fmtM(H)} м`} · ${list.length ? list.length + ' ' + plural(list.length, ['элемент', 'элемента', 'элементов']) : tr`пусто`}</span>`;
     fig.appendChild(cap);
-    const svg = svgEl('svg', { class: 'wall-svg', role: 'img', 'aria-label': `Развёртка стены ${WALL_NAMES[side]}` }, fig);
+    const svg = svgEl('svg', { class: 'wall-svg', role: 'img', 'aria-label': tr`Развёртка стены ${WALL_NAMES[side]}` }, fig);
     drawWall(svg, len, H, list);
     host.appendChild(fig);
   }
@@ -147,7 +147,7 @@ function drawWall(svg, len, H, list) {
     if ((b - a) > fs * 1.6) svgText(svg, (a + b) / 2, yd - fs * 0.3, fmtM(b - a), { class: 'w-dim-t' });
   }
   svgEl('line', { x1: 0, y1: yd + fs * 1.3, x2: len, y2: yd + fs * 1.3, class: 'p-dim' }, svg);
-  svgText(svg, len / 2, yd + fs * 1.0, `${fmtM(len)} м`, { class: 'w-dim-t strong' });
+  svgText(svg, len / 2, yd + fs * 1.0, tr`${fmtM(len)} м`, { class: 'w-dim-t strong' });
 }
 
 // ---------- Выгрузка SVG: стили со страницы переносим в атрибуты, чтобы файл открывался где угодно ----------
