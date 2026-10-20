@@ -73,8 +73,11 @@ function onKey(e) {
 }
 
 function share() {
-  const url = location.href.split('#')[0] + '#p=' + encodeShare();
-  const done = () => toast('Ссылка на проект скопирована');
+  let url = location.href.split('#')[0] + '#p=' + encodeShare();
+  // Если смотрят в 3D — ссылка откроет 3D с тем же ракурсом
+  const o = v3.orbit, cam = v3.on && o.t;
+  if (cam) url += '&v=' + [o.th, o.ph, o.r, o.t.x, o.t.y, o.t.z].map((n) => +n.toFixed(3)).join(',');
+  const done = () => toast(cam ? 'Ссылка на проект и ракурс 3D скопирована' : 'Ссылка на проект скопирована');
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => { history.replaceState(null, '', url); toast('Ссылка в адресной строке — скопируйте её'); });
   else { history.replaceState(null, '', url); toast('Ссылка в адресной строке — скопируйте её'); }
 }
@@ -143,12 +146,15 @@ $('#bom').addEventListener('change', onBomChange);
 document.addEventListener('keydown', onKey);
 
 (function init() {
-  const m = location.hash.match(/#p=([\w-]+)/);
+  const m = location.hash.match(/#p=([\w-]+)/), v = location.hash.match(/[#&]v=([-\d.,]+)/);
+  const cam = v && v[1].split(',').map(Number);
+  if (cam && cam.length === 6 && cam.every(Number.isFinite)) v3.pendingCam = cam;
   if (m) {
     try { load(decodeShare(m[1])); history.replaceState(null, '', location.pathname + location.search); return; }
-    catch (e) { toast('Ссылка на проект повреждена, открыт последний план'); }
+    catch (e) { v3.pendingCam = null; toast('Ссылка на проект повреждена, открыт последний план'); }
   }
   if (!loadLocal()) applyTemplate('multi');
 })();
 renderPalette();
 render();
+if (v3.pendingCam) setView3d(true);

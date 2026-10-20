@@ -7,7 +7,7 @@ const THREE_SRC = [
 const ORBIT0 = { th: -0.55, ph: 1.0 };
 const v3 = {
   on: false, loading: null, renderer: null, scene: null, cam: null, root: null, walls: [], pick: [],
-  mats: new Map(), orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
+  mats: new Map(), pendingCam: null, orbit: { th: ORBIT0.th, ph: ORBIT0.ph, r: 10, t: null }, sig: '', frame: 0,
 };
 
 function loadThree() {
@@ -55,6 +55,7 @@ function init3d() {
     if (!b) return;
     const o = v3.orbit, k = b.dataset.cam;
     if (k === 'png') return snapshot3d();
+    if (k === 'share') return share();
     if (k === 'top') { o.th = 0; o.ph = 0.02; }
     if (k === 'front') { o.th = 0; o.ph = 1.35; }
     if (k === 'home') { o.th = ORBIT0.th; o.ph = ORBIT0.ph; }
@@ -115,7 +116,13 @@ function build3d() {
   if (!v3.renderer || !v3.on) return;
   const { L, W, H } = state.room, l = L / 100, w = W / 100, h = H / 100;
   const sig = `${L}x${W}x${H}`;
-  if (sig !== v3.sig || !v3.orbit.t) { v3.sig = sig; resetTarget(); }
+  if (v3.pendingCam) {
+    // Ракурс из ссылки
+    const [th, ph, r, x, y, z] = v3.pendingCam;
+    Object.assign(v3.orbit, { th, ph: clamp(ph, 0.02, 1.52), r: clamp(r, 1, 80), t: new THREE.Vector3(x, y, z) });
+    v3.pendingCam = null;
+    v3.sig = sig;
+  } else if (sig !== v3.sig || !v3.orbit.t) { v3.sig = sig; resetTarget(); }
   if (v3.root) {
     v3.scene.remove(v3.root);
     v3.root.traverse((o) => { o.geometry?.dispose(); o.material?.map?.dispose(); if (o.isSprite) o.material.dispose(); });
@@ -178,6 +185,7 @@ function build3d() {
       root.add(lines([x0, y, z0, x1, y, z0, x1, y, z0, x1, y, z1, x1, y, z1, x0, y, z1, x0, y, z1, x0, y, z0], col, 0.6));
     }
   }
+  buildPerson(root);
   v3.sun.position.set(l * 0.3, h * 3 + 4, -w * 0.4);
   v3.sun.target.position.set(l / 2, 0, w / 2);
   draw3d();
@@ -189,17 +197,57 @@ function lines(pts, color, op) {
   v3.mats.set('line' + v3.mats.size, m);
   return new THREE.LineSegments(geo, m);
 }
-function letter(t) {
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 64;
-  const x = cv.getContext('2d');
+function letter(t, size = 0.45, px = 44) {
+  const cv = document.createElement('canvas'), x = cv.getContext('2d'), font = `600 ${px}px "Segoe UI", system-ui, sans-serif`;
+  x.font = font;
+  cv.width = Math.max(64, Math.ceil(x.measureText(t).width + 16));
+  cv.height = 64;
+  x.font = font;
   x.fillStyle = cssVar('--muted');
-  x.font = '600 44px "Segoe UI", system-ui, sans-serif';
   x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText(t, 32, 35);
+  x.fillText(t, cv.width / 2, 35);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false }));
-  s.scale.set(0.45, 0.45, 1);
+  s.scale.set(size * cv.width / 64, size, 1);
   return s;
+}
+
+// ---------- Человек 175 см для масштаба: одна рука поднята, кончики пальцев на 2,25 м ----------
+function personSpot() {
+  const { L, W } = state.room;
+  const solid = state.items.filter((i) => !['floor', 'ceil'].includes(CAT[i.id].kind)).map(body);
+  const zones = state.items.filter(hasZone).map(zone);
+  let best = [L / 2, W / 2], bd = Infinity;
+  for (let y = 40; y <= W - 40; y += 20) for (let x = 40; x <= L - 40; x += 20) {
+    const r = rect(x - 30, y - 20, 60, 40);
+    if (solid.some((b) => inter(b, r))) continue;
+    // Лучше в проходе, вне зон безопасности, поближе к середине зала
+    const d = Math.hypot(x - L / 2, y - W / 2) + (zones.some((z) => inter(z, r)) ? 1e5 : 0);
+    if (d < bd) { bd = d; best = [x, y]; }
+  }
+  return best;
+}
+function buildPerson(root) {
+  const g = new THREE.Group(), m = mat(cssVar('--muted'));
+  const cap = (r, len, x, y, z = 0) => {
+    const o = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), m);
+    o.position.set(x, y, z);
+    g.add(o);
+    return o;
+  };
+  for (const x of [-0.09, 0.09]) cap(0.065, 0.74, x, 0.016 + 0.065 + 0.37);
+  cap(0.14, 0.36, 0, 1.2).scale.z = 0.65;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 16, 12), m);
+  head.position.set(0, 1.645, 0);
+  g.add(head);
+  cap(0.045, 0.56, 0.19, 1.15);
+  cap(0.045, 0.68, -0.19, 1.48 + 0.385);
+  const [x, y] = personSpot();
+  g.position.set(x / 100, 0, y / 100);
+  g.rotation.y = v3.orbit.th;
+  const t = letter('1,75 м', 0.22, 36);
+  t.position.set(0.42, 1.75, 0);
+  g.add(t);
+  root.add(g);
 }
 
 // Один предмет в локальных осях: x вдоль ширины, z вдоль глубины, «верх» плана (стена) — z = −d/2
