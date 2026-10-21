@@ -136,7 +136,7 @@ function setEnv(k, showcase) {
     resetTarget();
     const o = v3.orbit;
     o.th = ORBIT0.th;
-    if (v3.env === 'tower') { o.r *= 4.5; o.ph = 1.2; } else if (v3.env === 'raft') { o.r *= 1.15; o.ph = 1.1; } else if (v3.env !== 'none') { o.r *= 1.8; o.ph = 1.12; } else o.ph = ORBIT0.ph;
+    if (v3.env === 'tower') { o.r *= 4.5; o.ph = 1.2; } else if (v3.env === 'raft') { o.th = 2.3; o.r *= 1.25; o.ph = 1.18; } else if (v3.env !== 'none') { o.r *= 1.8; o.ph = 1.12; } else o.ph = ORBIT0.ph;
   }
   build3d();
 }
@@ -244,6 +244,21 @@ function build3d() {
     wall3d(root, l + 2 * T, h, l / 2, w + T / 2, 0, E.open ? 'rail' : glaze.includes(2)),
     wall3d(root, w + 2 * T, h, -T / 2, w / 2, Math.PI / 2, E.open ? 'rail' : glaze.includes(3)),
   ];
+  // Вода зеркалом: отражает небо, облака, берега и плот
+  if (E.water != null && v3.refl && THREE.Reflector) {
+    const sz = v3.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const wm = mirrorMesh(900, 900, Math.round(clamp(sz.x / 2, 256, 1024)), Math.round(clamp(sz.y / 2, 256, 1024)));
+    wm.material.uniforms.color.value = new THREE.Color(0x8a979c);
+    wm.rotation.x = -Math.PI / 2;
+    wm.position.set(l / 2, E.water + 0.02, w / 2);
+    root.add(wm);
+    // Тёмная речная вода: зеркало приглушено полупрозрачным слоем (снизу его не видно)
+    const dark = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshBasicMaterial({ color: 0x1c2a30, transparent: true, opacity: 0.5, depthWrite: false }));
+    dark.rotation.x = -Math.PI / 2;
+    dark.position.set(l / 2, E.water + 0.03, w / 2);
+    v3.mats.set('water', dark.material);
+    root.add(dark);
+  }
   if (!E.open) root.add(lines([0, h, 0, l, h, 0, l, h, 0, l, h, w, l, h, w, 0, h, w, 0, h, w, 0, h, 0], cssVar('--muted')));
   [[l / 2, -0.5], [l + 0.5, w / 2], [l / 2, w + 0.5], [-0.5, w / 2]].forEach(([x, z], i) => {
     const s = letter(WALL_NAMES[i]);
@@ -347,10 +362,10 @@ function wall3d(root, len, h, x, z, rot, glass) {
   g.rotation.y = rot;
   root.add(g);
   if (glass === 'rail') {
-    // Под открытым небом: перила из труб высотой 0,95 м
-    const pm = mat('#8f9598', { shiny: true }), k = Math.max(1, Math.round(len / 1.5));
-    for (let i = 0; i <= k; i++) cyl(g, 0.03, 0.95, 'y', -len / 2 + i * len / k, 0.475, 0, pm);
-    for (const y of [0.5, 0.95]) cyl(g, 0.028, len, 'x', 0, y, 0, pm);
+    // Под открытым небом: низкий бортик из красных труб, как у рамы плота
+    const pm = mat('#b9502f', { shiny: true }), k = Math.max(1, Math.round(len / 1.5));
+    for (let i = 0; i <= k; i++) cyl(g, 0.025, 0.45, 'y', -len / 2 + i * len / k, 0.225, 0, pm);
+    cyl(g, 0.025, len, 'x', 0, 0.45, 0, pm);
     return g;
   }
   if (!glass) { box3(g, len, h, T, 0, 0, 0, wm); return g; }

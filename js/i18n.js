@@ -164,7 +164,7 @@ const I18N_EN = {
   'Отражения': 'Reflections', 'Настоящие отражения в зеркалах (на слабых устройствах может тормозить)': 'Real reflections in mirrors (may be slow on weak devices)',
   'Обзор': 'Overview', 'Изнутри': 'Inside', 'Встать в зале и оглядеться': 'Stand in the room and look around',
   'Окружение': 'Surroundings', 'Где стоит зал': 'Where the gym is',
-  'Без окружения': 'No surroundings', 'Квартира, 5 этаж': 'Apartment, 5th floor', 'Небоскрёб, 50 этаж': 'Skyscraper, 50th floor', 'Загород у реки': 'Countryside by a river', 'Плот на Луге': 'Raft on the Luga river', 'Окружение': 'Surroundings', 'Сцены': 'Scenes',
+  'Без окружения': 'No surroundings', 'Квартира, 5 этаж': 'Apartment, 5th floor', 'Небоскрёб, 50 этаж': 'Skyscraper, 50th floor', 'Загород у реки': 'Countryside by a river', 'Плот на Луге': 'Raft on the Luga river', 'Окружение': 'Surroundings', 'Сцены': 'Scenes', 'Дом 6×10': 'House 6×10',
   'Это ваш зал в окружении «{0}». Оригинал — в списке, раздел «Сцены»': 'This is your own room in the “{0}” setting. The original is in the list under “Scenes”',
   'Загружена сцена «{0}». Ctrl+Z вернёт прежний план': 'Scene “{0}” loaded. Ctrl+Z brings back your previous plan', 'Сверху': 'Top', 'С пола': 'Eye level',
   'Ссылка на проект с этим ракурсом': 'Link to the project with this view',
