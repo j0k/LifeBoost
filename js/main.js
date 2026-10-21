@@ -99,9 +99,11 @@ $('#tplSel').innerHTML = `<option value="">${tr`Шаблон зала…`}</opti
 $('#tplSel').onchange = (e) => {
   if (!e.target.value) return;
   beginChange();
+  const env = TEMPLATES.find((t) => t.id === e.target.value).env;
   applyTemplate(e.target.value);
   e.target.value = '';
   render();
+  if (env) setEnv(env, true);
   toast(tr`Шаблон загружен. Ctrl+Z вернёт прежний план`);
 };
 $('#roomL').onchange = (e) => setRoom('L', e.target.value);

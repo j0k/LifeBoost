@@ -164,7 +164,7 @@ const I18N_EN = {
   'Отражения': 'Reflections', 'Настоящие отражения в зеркалах (на слабых устройствах может тормозить)': 'Real reflections in mirrors (may be slow on weak devices)',
   'Обзор': 'Overview', 'Изнутри': 'Inside', 'Встать в зале и оглядеться': 'Stand in the room and look around',
   'Окружение': 'Surroundings', 'Где стоит зал': 'Where the gym is',
-  'Без окружения': 'No surroundings', 'Квартира, 5 этаж': 'Apartment, 5th floor', 'Небоскрёб, 50 этаж': 'Skyscraper, 50th floor', 'Загород у реки': 'Countryside by a river', 'Сверху': 'Top', 'С пола': 'Eye level',
+  'Без окружения': 'No surroundings', 'Квартира, 5 этаж': 'Apartment, 5th floor', 'Небоскрёб, 50 этаж': 'Skyscraper, 50th floor', 'Загород у реки': 'Countryside by a river', 'Плот на Луге': 'Raft on the Luga river', 'Сверху': 'Top', 'С пола': 'Eye level',
   'Ссылка на проект с этим ракурсом': 'Link to the project with this view',
   'Проверки': 'Checks', 'Сводка': 'Summary', 'вместимость и бюджет': 'capacity and budget',
   'Разрез: хватит ли потолка': 'Section: is the ceiling high enough',
@@ -216,6 +216,7 @@ function translateData() {
     tatami: ['Tatami 4 cm', 'Tatami', 'EVA puzzle mats are cheaper; 100×100 PE tatami is firmer and doesn’t slide apart. For acrobatics and acroyoga — at least 4 cm.'],
     rubber: ['Rubber flooring 20 mm', 'Rubber', 'A must for CrossFit: barbells, kettlebells and jumps. Under a lifting platform use 30–40 mm.'],
     hardfloor: ['Sports vinyl flooring', 'Sports floor', 'Warm and washable, fine for yoga and stretching. Not needed if the room already has parquet.'],
+    airfloor: ['Inflatable air floor 4×3 m', 'Air floor', 'A soft, springy floor for jumps, rolls and acroyoga; at night you sleep on it. It floats. Needs an electric pump.'],
     airtrack: ['Air track 6×2 m', 'Air track', 'Round-offs and flips along the long axis; leave run-out at both ends. Needs an electric pump.'],
     gymmat: ['Gymnastics mat 2×1×0.1 m', 'Mat 2×1'],
     crash: ['Crash mat 2×2×0.3 m', 'Crash mat', 'Goes under a rigging point, a climbing rope and the landing zone of a trampoline.'],
@@ -310,7 +311,7 @@ function translateData() {
   }
   const T = {
     mini: 'Mini: pull-up bar and stretching', home: 'Home corner', studio: 'Yoga and stretching studio',
-    box: 'CrossFit box', acro: 'Acrobatics and acroyoga', multi: 'LifeBoost: multi-purpose gym', empty: 'Empty room',
+    box: 'CrossFit box', acro: 'Acrobatics and acroyoga', multi: 'LifeBoost: multi-purpose gym', raft: 'Raft on the Luga river', empty: 'Empty room',
   };
   for (const t of TEMPLATES) t.name = T[t.id] || t.name;
 }

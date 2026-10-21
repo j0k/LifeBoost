@@ -138,6 +138,7 @@ function drawItem(g, it, c, isSel, sev) {
   if (it.id === 'minitramp') svgEl('path', { d: `M${-w / 4} 0H${w / 2 + 60}m-18 -12l18 12l-18 12`, class: 'p-sym strong' }, grp);
   if (it.id === 'rack') svgEl('path', { d: `M0 ${-d / 4}V${d / 2 + 70}m-12 -18l12 18l12 -18`, class: 'p-sym strong' }, grp);
   if (it.id === 'rower') svgEl('line', { x1: -w / 2 + 20, y1: 0, x2: w / 2 - 50, y2: 0, class: 'p-sym strong' }, grp);
+  if (it.id === 'airfloor') for (let x = -w / 2 + 25; x < w / 2 - 10; x += 25) svgEl('path', { d: `M${x} ${-d / 2 + 8}V${d / 2 - 8}`, class: 'p-sym' }, grp);
   if (it.id === 'airtrack') svgEl('rect', { x: -w / 2 + 12, y: -d / 2 + 12, width: w - 24, height: d - 24, rx: 10, class: 'p-sym' }, grp);
   if (it.id === 'crash' || it.id === 'aycrash') svgEl('path', { d: `M${-w / 2} ${-d / 2}L${w / 2} ${d / 2}M${w / 2} ${-d / 2}L${-w / 2} ${d / 2}`, class: 'p-sym' }, grp);
   if (it.id === 'yogamat') svgEl('line', { x1: -w / 2 + 12, y1: -d / 2 + 6, x2: -w / 2 + 12, y2: d / 2 - 6, class: 'p-sym' }, grp);

@@ -116,13 +116,20 @@ function setEnv(k, showcase) {
     resetTarget();
     const o = v3.orbit;
     o.th = ORBIT0.th;
-    if (v3.env === 'tower') { o.r *= 4.5; o.ph = 1.2; } else if (v3.env !== 'none') { o.r *= 1.8; o.ph = 1.12; } else o.ph = ORBIT0.ph;
+    if (v3.env === 'tower') { o.r *= 4.5; o.ph = 1.2; } else if (v3.env === 'raft') { o.r *= 1.15; o.ph = 1.1; } else if (v3.env !== 'none') { o.r *= 1.8; o.ph = 1.12; } else o.ph = ORBIT0.ph;
   }
   build3d();
 }
 // Взгляд изнутри: камера на высоте глаз; дальше тянуть — оглядываться, правой кнопкой — ходить
 function lookInside() {
   const { L, W } = state.room, o = v3.orbit;
+  if (ENVS[v3.env].open) {
+    // На плоту: с носа открытой палубы на корму, где спальный отсек и верхняя палуба
+    const x = Math.max(L / 100 - 1, L / 200), z = Math.max(W / 100 - 0.8, W / 200);
+    o.t = new THREE.Vector3(x, 1.6, z);
+    o.r = 0.05; o.th = Math.atan2(x, z - W / 200); o.ph = Math.PI / 2 + 0.1;
+    return draw3d();
+  }
   // Из угла стен В и Г по диагонали на угол А–Б: там панорамные окна
   o.t = new THREE.Vector3(Math.min(1.2, L / 200), 1.6, Math.max(W / 100 - 1.2, W / 200));
   o.r = 0.05; o.th = -Math.atan2(L / 100, W / 100); o.ph = Math.PI / 2 + 0.08;
@@ -211,12 +218,12 @@ function build3d() {
   root.add(lines(pts, cssVar('--line')));
   const T = WALL_T / 100, glaze = E.glaze || [];
   v3.walls = [
-    wall3d(root, l + 2 * T, h, l / 2, -T / 2, 0, glaze.includes(0)),
-    wall3d(root, w + 2 * T, h, l + T / 2, w / 2, Math.PI / 2, glaze.includes(1)),
-    wall3d(root, l + 2 * T, h, l / 2, w + T / 2, 0, glaze.includes(2)),
-    wall3d(root, w + 2 * T, h, -T / 2, w / 2, Math.PI / 2, glaze.includes(3)),
+    wall3d(root, l + 2 * T, h, l / 2, -T / 2, 0, E.open ? 'rail' : glaze.includes(0)),
+    wall3d(root, w + 2 * T, h, l + T / 2, w / 2, Math.PI / 2, E.open ? 'rail' : glaze.includes(1)),
+    wall3d(root, l + 2 * T, h, l / 2, w + T / 2, 0, E.open ? 'rail' : glaze.includes(2)),
+    wall3d(root, w + 2 * T, h, -T / 2, w / 2, Math.PI / 2, E.open ? 'rail' : glaze.includes(3)),
   ];
-  root.add(lines([0, h, 0, l, h, 0, l, h, 0, l, h, w, l, h, w, 0, h, w, 0, h, w, 0, h, 0], cssVar('--muted')));
+  if (!E.open) root.add(lines([0, h, 0, l, h, 0, l, h, 0, l, h, w, l, h, w, 0, h, w, 0, h, w, 0, h, 0], cssVar('--muted')));
   [[l / 2, -0.5], [l + 0.5, w / 2], [l / 2, w + 0.5], [-0.5, w / 2]].forEach(([x, z], i) => {
     const s = letter(WALL_NAMES[i]);
     s.position.set(x, 0.3, z);
@@ -318,6 +325,13 @@ function wall3d(root, len, h, x, z, rot, glass) {
   g.position.set(x, 0, z);
   g.rotation.y = rot;
   root.add(g);
+  if (glass === 'rail') {
+    // Под открытым небом: перила из труб высотой 0,95 м
+    const pm = mat('#8f9598', { shiny: true }), k = Math.max(1, Math.round(len / 1.5));
+    for (let i = 0; i <= k; i++) cyl(g, 0.03, 0.95, 'y', -len / 2 + i * len / k, 0.475, 0, pm);
+    for (const y of [0.5, 0.95]) cyl(g, 0.028, len, 'x', 0, y, 0, pm);
+    return g;
+  }
   if (!glass) { box3(g, len, h, T, 0, 0, 0, wm); return g; }
   const sill = 0.35, lintel = Math.min(0.4, h * 0.12), gh = h - sill - lintel;
   box3(g, len, sill, T, 0, 0, 0, wm);
@@ -404,6 +418,7 @@ function buildItem(g, it, c, H) {
     }
     case 'mat':
       box3(g, w, Math.max(hg, 0.012), d, 0, base, 0, m);
+      if (it.id === 'airfloor') for (let x = -w / 2 + 0.25; x < w / 2 - 0.1; x += 0.25) box3(g, 0.012, 0.004, d - 0.1, x, base + hg, 0, mat(cssVar('--surface'), { op: 0.5 }));
       if (it.id === 'airtrack') box3(g, w - 0.24, 0.004, d - 0.24, 0, base + hg, 0, mat(cssVar('--surface'), { op: 0.35 }));
       return;
     case 'ceil': {

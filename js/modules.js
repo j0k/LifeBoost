@@ -121,5 +121,9 @@ const TEMPLATES = [
       { m: 'yoga-12', x: 40, y: 900 }, { m: 'str-group', x: 690, y: 958, turn: 2 },
       { m: 'cf-rig', x: 1200, y: 0 }, { m: 'cf-wod', x: 1380, y: 840, turn: 1 }, { m: 'cf-cardio', x: 1100, y: 560 },
       { i: 'door', x: 960, y: 0, rot: 0 }, { i: 'storage', x: 1755, y: 600, rot: 90 }], kits: { aidkit: 1 } },
+  // Плот с похода по Луге: открытая палуба с надувным батутом, на корме спальный отсек с йога-дорожками
+  { id: 'raft', name: 'Плот на Луге', room: [900, 420, 600], env: 'raft',
+    place: [{ i: 'yogamat', x: 5, y: 15 }, { i: 'yogamat', x: 213, y: 15 }, { i: 'yogamat', x: 5, y: 116 }, { i: 'yogamat', x: 213, y: 116 }, { i: 'yogamat', x: 5, y: 217 }, { i: 'yogamat', x: 213, y: 217 }, { i: 'yogamat', x: 5, y: 318 }, { i: 'yogamat', x: 213, y: 318 },
+      { i: 'airfloor', x: 450, y: 60, w: 400, d: 300 }] },
   { id: 'empty', name: 'Пустой зал', room: [1000, 800, 350], place: [{ i: 'door', x: 60, y: 790, rot: 180 }] },
 ];

@@ -48,6 +48,9 @@ const CATALOG = [
   { id: 'airtrack', grp: 'acro', disc: 'acro', kind: 'mat', name: 'Акро-дорожка (air track) 6×2 м', short: 'Air track',
     w: 600, d: 200, hgt: 20, m: [60, 120, 60, 120], softOk: true, landing: true, h: [350, 450], cap: { acro: 4 }, price: [45000, 130000],
     note: 'Рондаты и перевороты по длинной оси, на торцах нужен запас. В комплект нужен электронасос.' },
+  { id: 'airfloor', grp: 'acro', disc: 'acro', kind: 'mat', name: 'Надувной мат-батут (air floor) 4×3 м', short: 'Air floor',
+    w: 400, d: 300, hgt: 15, m: [50, 50, 50, 50], softOk: true, landing: true, resize: true, unit: 'm2', h: [300, 400], cap: { acro: 3, ay: 2 }, price: [5000, 12000],
+    note: 'Мягкий упругий пол: прыжки, кувырки, акройога, а ночью на нём спят. Держится на воде. Нужен электронасос.' },
   { id: 'gymmat', grp: 'acro', disc: 'acro', kind: 'mat', name: 'Мат гимнастический 2×1×0,1 м', short: 'Мат 2×1',
     w: 200, d: 100, hgt: 10, m: [30, 30, 30, 30], softOk: true, h: [250, 300], cap: { acro: 1, str: 1 }, price: [6000, 14000] },
   { id: 'crash', grp: 'acro', disc: 'acro', kind: 'mat', name: 'Страховочный мат 2×2×0,3 м', short: 'Страх. мат',
@@ -168,7 +171,7 @@ const CAT = Object.fromEntries(CATALOG.map((c) => [c.id, c]));
 // Цены рынка США, доллары, 2026 (вилка «budget – pro»). Тоже ориентир: сверяйте с поставщиками.
 const PRICE_US = {
   tatami: [30, 60], olytramp: [12000, 28000], wallpad: [150, 350], mookjong: [500, 1600], rubber: [35, 75], hardfloor: [25, 60],
-  airtrack: [700, 2000], gymmat: [120, 300], crash: [500, 1200], canes: [100, 400], minitramp: [400, 1200],
+  airtrack: [700, 2000], airfloor: [60, 150], gymmat: [120, 300], crash: [500, 1200], canes: [100, 400], minitramp: [400, 1200],
   silks: [400, 1000], hoop: [300, 800],
   aypad: [150, 350], aycrash: [200, 450],
   yogamat: [25, 130], yogawall: [300, 900],
