@@ -311,7 +311,7 @@ function translateData() {
   }
   const T = {
     mini: 'Mini: pull-up bar and stretching', home: 'Home corner', studio: 'Yoga and stretching studio',
-    box: 'CrossFit box', acro: 'Acrobatics and acroyoga', multi: 'LifeBoost: multi-purpose gym', raft: 'Raft on the Luga river', empty: 'Empty room',
+    box: 'CrossFit box', acro: 'Acrobatics and acroyoga', multi: 'LifeBoost: multi-purpose gym', raft: 'Raft on the Luga river', 'raft-oly': 'Raft with an Olympic trampoline', empty: 'Empty room',
   };
   for (const t of TEMPLATES) t.name = T[t.id] || t.name;
 }
