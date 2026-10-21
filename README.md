@@ -8,5 +8,7 @@
 
 English: https://juri-konoplev.pro/LifeBoost/en/
 
+Плот из похода по Луге сразу в 3D: https://juri-konoplev.pro/LifeBoost/#tpl=raft (с олимпийским батутом — `#tpl=raft-oly`)
+
 Статическая страница без сборки: `index.html`, `css/`, `js/` (обычные скрипты, работает и с диска).
 Каталог и цены — `js/catalog.js`, модули и шаблоны залов — `js/modules.js`, правила проверок — `js/checks.js`.

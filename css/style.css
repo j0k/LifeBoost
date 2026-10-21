@@ -112,6 +112,7 @@ a.btn { color: inherit; text-decoration: none; font-size: 13px; letter-spacing: 
 #view3d canvas:active { cursor: grabbing; }
 .v3-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; flex-wrap: wrap; justify-content: end; }
 .v3-tools .tgl { padding: 4px 10px; }
+.v3-tools select { max-width: 11.5em; }
 .v3-tools .btn, .v3-tools .tgl:not([aria-pressed="true"]) { background: color-mix(in srgb, var(--surface) 85%, transparent); }
 .v3-tip { position: absolute; pointer-events: none; font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--ink); color: var(--surface); white-space: nowrap; }
 .foot { text-align: center; font-size: 12px; padding-top: 8px; }

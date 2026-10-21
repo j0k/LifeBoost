@@ -99,11 +99,11 @@ $('#tplSel').innerHTML = `<option value="">${tr`Шаблон зала…`}</opti
 $('#tplSel').onchange = (e) => {
   if (!e.target.value) return;
   beginChange();
-  const env = TEMPLATES.find((t) => t.id === e.target.value).env;
-  applyTemplate(e.target.value);
+  const id = e.target.value;
   e.target.value = '';
+  if (TEMPLATES.find((t) => t.id === id).env) return loadScene(id);
+  applyTemplate(id);
   render();
-  if (env) setEnv(env, true);
   toast(tr`Шаблон загружен. Ctrl+Z вернёт прежний план`);
 };
 $('#roomL').onchange = (e) => setRoom('L', e.target.value);
@@ -166,8 +166,12 @@ document.addEventListener('keydown', onKey);
     try { load(decodeShare(m[1])); history.replaceState(null, '', location.pathname + location.search); return; }
     catch (e) { v3.pendingCam = null; toast(tr`Ссылка на проект повреждена, открыт последний план`); }
   }
+  // #tpl=raft — открыть готовую сцену (плот из видео) сразу в 3D
+  const tpl = location.hash.match(/#tpl=([\w-]+)/), scene = tpl && TEMPLATES.find((t) => t.id === tpl[1]);
+  if (scene) { v3.openScene = scene; history.replaceState(null, '', location.pathname + location.search); return; }
   if (!loadLocal()) applyTemplate('multi');
 })();
 renderPalette();
 render();
-if (v3.pendingCam) setView3d(true);
+if (v3.openScene) { const id = v3.openScene.id; v3.openScene = null; loadScene(id, true); }
+else if (v3.pendingCam) setView3d(true);

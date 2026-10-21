@@ -66,9 +66,18 @@ function init3d() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => v3.on && build3d());
   bindOrbit(v3.renderer.domElement);
   const envSel = $('#env3d');
-  envSel.innerHTML = Object.entries(ENVS).map(([k, e]) => `<option value="${k}">${e.name}</option>`).join('');
+  // Сцены — готовые залы со своим окружением: загружают план целиком (Ctrl+Z вернёт прежний)
+  envSel.innerHTML = `<optgroup label="${tr`Окружение`}">` + Object.entries(ENVS).map(([k, e]) => `<option value="${k}">${e.name}</option>`).join('') + '</optgroup>' +
+    `<optgroup label="${tr`Сцены`}">` + TEMPLATES.filter((t) => t.env).map((t) => `<option value="tpl:${t.id}">${t.name}</option>`).join('') + '</optgroup>';
   envSel.value = v3.env;
-  envSel.onchange = () => setEnv(envSel.value, true);
+  envSel.onchange = () => {
+    const v = envSel.value;
+    if (v.startsWith('tpl:')) return loadScene(v.slice(4));
+    setEnv(v, true);
+    // Своё окружение на чужом зале: подскажем, где оригинал
+    const scene = TEMPLATES.find((t) => t.env === v);
+    if (scene && !TEMPLATES.some((t) => t.env === v && t.name === state.name)) toast(tr`Это ваш зал в окружении «${ENVS[v].name}». Оригинал — в списке, раздел «Сцены»`);
+  };
   box.querySelector('[data-cam="refl"]').setAttribute('aria-pressed', String(v3.refl));
   box.querySelector('.v3-tools').onclick = (e) => {
     const b = e.target.closest('[data-cam]');
@@ -106,6 +115,17 @@ function resetTarget() {
   v3.orbit.t = new THREE.Vector3(L / 200, Math.min(H / 100, 4) * 0.25, W / 200);
   v3.orbit.r = Math.max(L, W) / 100 * 1.45 + H / 100 * 1.3;
   if (v3.orbit.ph > 1.52) v3.orbit.ph = ORBIT0.ph;
+}
+// Сцена: шаблон со своим окружением, сразу в 3D и с общим видом
+function loadScene(id, quiet) {
+  const t = TEMPLATES.find((x) => x.id === id);
+  if (!t) return;
+  if (!quiet) beginChange();
+  applyTemplate(id);
+  if (t.env) { v3.env = t.env; v3.showcase = true; }
+  render();
+  if (v3.on) build3d(); else setView3d(true);
+  if (!quiet) toast(tr`Загружена сцена «${t.name}». Ctrl+Z вернёт прежний план`);
 }
 // Окружение: выбор сохраняется у зрителя; при смене камера отъезжает, чтобы было видно, где зал
 function setEnv(k, showcase) {
@@ -185,6 +205,7 @@ function build3d() {
     v3.pendingCam = null;
     v3.sig = sig;
   } else if (sig !== v3.sig || !v3.orbit.t) { v3.sig = sig; resetTarget(); }
+  if (v3.showcase) { v3.showcase = false; return setEnv(v3.env, true); }
   if (v3.root) {
     v3.scene.remove(v3.root);
     v3.root.traverse((o) => { if (o.isReflector) o.dispose(); o.geometry?.dispose(); o.material?.map?.dispose(); if (o.isSprite) o.material.dispose(); });
